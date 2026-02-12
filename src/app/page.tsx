@@ -7,6 +7,8 @@ export default function Home() {
   const [apiKey, setApiKey] = useState('');
   const [keyword, setKeyword] = useState('');
   const [city, setCity] = useState('');
+  const [district, setDistrict] = useState('');
+  const [village, setVillage] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ apiKey, keyword, city }),
+        body: JSON.stringify({ apiKey, keyword, city, district, village }),
       });
 
       const data = await res.json();
@@ -63,7 +65,13 @@ export default function Home() {
 
       worksheet['!cols'] = Object.keys(maxWidths).map(key => ({ wch: maxWidths[key] + 2 }));
 
-      XLSX.writeFile(workbook, `leads_${keyword}_${city}.xlsx`);
+      const filenameParts = ['leads', keyword, city];
+      if (district) filenameParts.push(district);
+      if (village) filenameParts.push(village);
+
+      const filename = filenameParts.join('_').replace(/\s+/g, '_') + '.xlsx';
+
+      XLSX.writeFile(workbook, filename);
     } catch (err) {
       console.error("Error generating Excel:", err);
       setError("Failed to generate Excel file");
@@ -114,6 +122,30 @@ export default function Home() {
                   placeholder="e.g. Jakarta"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                   required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Kecamatan (District) <span className="text-gray-400 text-xs">(Optional)</span></label>
+                <input
+                  type="text"
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  placeholder="e.g. Kebayoran Baru"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Kelurahan (Village) <span className="text-gray-400 text-xs">(Optional)</span></label>
+                <input
+                  type="text"
+                  value={village}
+                  onChange={(e) => setVillage(e.target.value)}
+                  placeholder="e.g. Senayan"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                 />
               </div>
             </div>

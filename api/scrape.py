@@ -13,6 +13,8 @@ class handler(BaseHTTPRequestHandler):
             api_key = body.get('apiKey')
             keyword = body.get('keyword')
             city = body.get('city')
+            district = body.get('district', '')
+            village = body.get('village', '')
             
             if not api_key or not keyword or not city:
                 self.send_response(400)
@@ -22,9 +24,18 @@ class handler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Missing required fields"}).encode('utf-8'))
                 return
 
+            # Construct query: "keyword di village district city"
+            location_parts = []
+            if village: location_parts.append(village)
+            if district: location_parts.append(district)
+            location_parts.append(city)
+            
+            location_str = " ".join(location_parts)
+            search_query = f"{keyword} di {location_str}"
+
             params = {
                 "engine": "google_maps",
-                "q": f"{keyword} di {city}",
+                "q": search_query,
                 "type": "search",
                 "api_key": api_key
             }
@@ -50,7 +61,10 @@ class handler(BaseHTTPRequestHandler):
                         "address": place.get("address"),
                         "phone": place.get("phone"),
                         "website": place.get("website"),
-                        "rating": place.get("rating")
+                        "rating": place.get("rating"),
+                        "district": district, # Return these so they appear in Excel
+                        "village": village,
+                        "city": city
                     })
                 
                 page_count += 1
