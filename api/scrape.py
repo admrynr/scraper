@@ -30,18 +30,30 @@ class handler(BaseHTTPRequestHandler):
             }
 
             search = GoogleSearch(params)
-            results = search.get_dict()
-            places = results.get("local_results", [])
             
             data = []
-            for place in places:
-                data.append({
-                    "name": place.get("title"),
-                    "address": place.get("address"),
-                    "phone": place.get("phone"),
-                    "website": place.get("website"),
-                    "rating": place.get("rating")
-                })
+            max_pages = 3 
+            page_count = 0
+            
+            # Iterate over pages (pagination yield dictionaries)
+            for results in search.pagination():
+                if page_count >= max_pages:
+                    break
+                    
+                places = results.get("local_results", [])
+                if not places:
+                    break
+                
+                for place in places:
+                    data.append({
+                        "name": place.get("title"),
+                        "address": place.get("address"),
+                        "phone": place.get("phone"),
+                        "website": place.get("website"),
+                        "rating": place.get("rating")
+                    })
+                
+                page_count += 1
 
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
