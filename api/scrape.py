@@ -36,6 +36,7 @@ class handler(BaseHTTPRequestHandler):
             
             keywords_list = [k.strip() for k in keyword.split(',') if k.strip()]
             data = []
+            seen_places = set()
 
             for kw in keywords_list:
                 search_query = f"{kw} di {location_str}"
@@ -56,6 +57,18 @@ class handler(BaseHTTPRequestHandler):
                         break
                     
                     for place in places:
+                        place_id = place.get("place_id")
+                        title = place.get("title", "")
+                        address = place.get("address", "")
+                        
+                        # Create unique identifier for deduplication
+                        unique_id = place_id if place_id else f"{title}_{address}"
+                        
+                        if unique_id in seen_places:
+                            continue
+                            
+                        seen_places.add(unique_id)
+                        
                         data.append({
                             "keyword_used": kw,
                             "name": place.get("title"),

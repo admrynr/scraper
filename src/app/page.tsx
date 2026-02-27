@@ -38,10 +38,14 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
-  // New states for formatting & filtering
+  // Sorting & Filtering
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [filterWebsite, setFilterWebsite] = useState(false);
   const [filterPhone, setFilterPhone] = useState(false);
+
+  // ── NEW: Selection State ──
+  // We track the *global index* within processedResults so selection survives pagination
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
 
   // Load saved states on mount
   useEffect(() => {
@@ -118,9 +122,10 @@ export default function Home() {
     if (waTemplate) localStorage.setItem('scraperWaTemplate', waTemplate);
   }, [waTemplate]);
 
-  // Reset page when filters or sorting change
+  // Reset page & selection when filters or sorting change
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedIndices(new Set());
   }, [filterWebsite, filterPhone, sortConfig]);
 
   const handleScrape = async (e: React.FormEvent) => {
@@ -129,6 +134,7 @@ export default function Home() {
     setError(null);
     setResults([]);
     setCurrentPage(1);
+    setSelectedIndices(new Set());
 
     try {
       const res = await fetch('/api/scrape', {
@@ -181,7 +187,6 @@ export default function Home() {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
 
-        // Handle numeric sorting for rating/reviews
         if (sortConfig.key === 'rating') {
           const reviewsA = Number(a.reviews) || 0;
           const reviewsB = Number(b.reviews) || 0;
@@ -200,12 +205,8 @@ export default function Home() {
           bValue = bValue ? String(bValue).toLowerCase() : '';
         }
 
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
@@ -222,17 +223,55 @@ export default function Home() {
 
   const requestSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === 'asc'
-    ) {
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
   };
 
-  const generateExcel = (data: any[]) => {
+  // ── Selection helpers ──
+  const pageStartIndex = (currentPage - 1) * itemsPerPage;
+
+  const isAllPageSelected = paginatedResults.length > 0 &&
+    paginatedResults.every((_, i) => selectedIndices.has(pageStartIndex + i));
+
+  const isSomePageSelected = paginatedResults.some((_, i) => selectedIndices.has(pageStartIndex + i));
+
+  const toggleSelectAll = () => {
+    const newSet = new Set(selectedIndices);
+    if (isAllPageSelected) {
+      // Deselect all on current page
+      paginatedResults.forEach((_, i) => newSet.delete(pageStartIndex + i));
+    } else {
+      // Select all on current page
+      paginatedResults.forEach((_, i) => newSet.add(pageStartIndex + i));
+    }
+    setSelectedIndices(newSet);
+  };
+
+  const toggleRow = (globalIndex: number) => {
+    const newSet = new Set(selectedIndices);
+    if (newSet.has(globalIndex)) {
+      newSet.delete(globalIndex);
+    } else {
+      newSet.add(globalIndex);
+    }
+    setSelectedIndices(newSet);
+  };
+
+  const selectedData = useMemo(() => {
+    return processedResults.filter((_, i) => selectedIndices.has(i));
+  }, [processedResults, selectedIndices]);
+
+  // ── Export helpers ──
+  const buildFilename = (suffix: string) => {
+    const parts = ['leads', keyword || 'export', cityName || 'data'];
+    if (districtName) parts.push(districtName);
+    if (villageName) parts.push(villageName);
+    return parts.join('_').replace(/\s+/g, '_') + suffix;
+  };
+
+  const exportExcel = (data: any[]) => {
     try {
       const worksheet = XLSX.utils.json_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -247,47 +286,71 @@ export default function Home() {
       }, {});
 
       worksheet['!cols'] = Object.keys(maxWidths).map(key => ({ wch: maxWidths[key] + 2 }));
-
-      const filenameParts = ['leads', keyword || 'export', cityName || 'data'];
-      if (districtName) filenameParts.push(districtName);
-      if (villageName) filenameParts.push(villageName);
-
-      const filename = filenameParts.join('_').replace(/\s+/g, '_') + '.xlsx';
-
-      XLSX.writeFile(workbook, filename);
+      XLSX.writeFile(workbook, buildFilename('.xlsx'));
     } catch (err) {
       console.error("Error generating Excel:", err);
       setError("Failed to generate Excel file");
     }
   };
 
+  const exportCSV = (data: any[]) => {
+    try {
+      if (data.length === 0) return;
+      const headers = Object.keys(data[0]);
+      const csvRows = [
+        headers.join(','),
+        ...data.map(row =>
+          headers.map(h => {
+            const val = row[h] != null ? String(row[h]) : '';
+            // Escape double-quotes and wrap in quotes if needed
+            return val.includes(',') || val.includes('"') || val.includes('\n')
+              ? `"${val.replace(/"/g, '""')}"`
+              : val;
+          }).join(',')
+        )
+      ];
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', buildFilename('.csv'));
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error generating CSV:", err);
+      setError("Failed to generate CSV file");
+    }
+  };
+
   const formatWhatsAppLink = (phone: string, name: string) => {
     if (!phone) return '#';
-
-    // Clean phone number (remove spaces, -, +, and convert leading 0 to 62)
     let cleanPhone = phone.replace(/[\s\-\+]/g, '');
     if (cleanPhone.startsWith('0')) {
       cleanPhone = '62' + cleanPhone.substring(1);
     } else if (cleanPhone.startsWith('8')) {
       cleanPhone = '62' + cleanPhone;
     }
-
-    // Replace {name} placeholder in template
     const text = waTemplate.replace(/{name}/g, name);
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
   };
 
   const clearResults = () => {
     setResults([]);
+    setSelectedIndices(new Set());
     localStorage.removeItem('scraperResults');
   };
 
+  // ── Export Dropdown State ──
+  const [showExportMenu, setShowExportMenu] = useState<null | 'all' | 'selected'>(null);
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="bg-indigo-600 px-6 py-4">
           <h1 className="text-2xl font-bold text-white">Google Maps Scraper CRM</h1>
-          <p className="text-indigo-100 text-sm">Serverless Leads Extractor & Prospecting Tool</p>
+          <p className="text-indigo-100 text-sm">Serverless Leads Extractor &amp; Prospecting Tool</p>
         </div>
 
         <div className="p-6">
@@ -396,8 +459,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${loading ? 'opacity-75 cursor-not-allowed' : ''
-                }`}
+              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
             >
               {loading ? 'Scraping...' : 'Start Scrape & Save to LocalStorage'}
             </button>
@@ -418,10 +480,17 @@ export default function Home() {
       {results.length > 0 && (
         <div className="w-full max-w-6xl mt-6">
           <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+
+            {/* ── Header ── */}
             <div className="bg-gray-100 px-6 py-4 flex flex-col items-start sm:flex-row justify-between sm:items-center gap-4 border-b border-gray-200">
               <div className="flex flex-col gap-2">
                 <h2 className="text-xl font-semibold text-gray-800">
                   Extracted Leads ({processedResults.length} / {results.length})
+                  {selectedIndices.size > 0 && (
+                    <span className="ml-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                      {selectedIndices.size} dipilih
+                    </span>
+                  )}
                 </h2>
                 <div className="flex items-center gap-4 text-sm text-gray-700">
                   <label className="flex items-center gap-2 cursor-pointer border border-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-50 transition">
@@ -435,13 +504,67 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => generateExcel(processedResults)}
-                  className="text-sm bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-                >
-                  Download Filtered Excel
-                </button>
+              {/* ── Export Buttons ── */}
+              <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+
+                {/* Export Semua */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowExportMenu(prev => prev === 'all' ? null : 'all')}
+                    className="text-sm bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center gap-1"
+                  >
+                    Export Semua ({processedResults.length})
+                    <span className="text-xs opacity-80">▾</span>
+                  </button>
+                  {showExportMenu === 'all' && (
+                    <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10 overflow-hidden">
+                      <button
+                        onClick={() => { exportExcel(processedResults); setShowExportMenu(null); }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition flex items-center gap-2"
+                      >
+                        📊 Excel (.xlsx)
+                      </button>
+                      <button
+                        onClick={() => { exportCSV(processedResults); setShowExportMenu(null); }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition flex items-center gap-2"
+                      >
+                        📄 CSV (.csv)
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Export Dipilih */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowExportMenu(prev => prev === 'selected' ? null : 'selected')}
+                    disabled={selectedIndices.size === 0}
+                    className={`text-sm px-4 py-2 rounded-md transition flex items-center gap-1 ${selectedIndices.size > 0
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      }`}
+                  >
+                    Export Dipilih ({selectedIndices.size})
+                    <span className="text-xs opacity-80">▾</span>
+                  </button>
+                  {showExportMenu === 'selected' && selectedIndices.size > 0 && (
+                    <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10 overflow-hidden">
+                      <button
+                        onClick={() => { exportExcel(selectedData); setShowExportMenu(null); }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition flex items-center gap-2"
+                      >
+                        📊 Excel (.xlsx)
+                      </button>
+                      <button
+                        onClick={() => { exportCSV(selectedData); setShowExportMenu(null); }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition flex items-center gap-2"
+                      >
+                        📄 CSV (.csv)
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   onClick={clearResults}
                   className="text-sm border border-red-200 text-red-600 px-4 py-2 rounded-md hover:bg-red-50 transition"
@@ -451,6 +574,7 @@ export default function Home() {
               </div>
             </div>
 
+            {/* ── WA Template ── */}
             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
               <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Template (Use {'{name}'} for dynamic name insertion)</label>
               <textarea
@@ -461,10 +585,24 @@ export default function Home() {
               />
             </div>
 
+            {/* ── Table ── */}
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    {/* Checkbox column header */}
+                    <th scope="col" className="px-4 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={isAllPageSelected}
+                        ref={el => {
+                          if (el) el.indeterminate = isSomePageSelected && !isAllPageSelected;
+                        }}
+                        onChange={toggleSelectAll}
+                        className="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        title="Pilih semua di halaman ini"
+                      />
+                    </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200" onClick={() => requestSort('name')}>
                       Business Name {sortConfig?.key === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
                     </th>
@@ -478,51 +616,77 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedResults.map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                        {item.website && (
-                          <a href={item.website} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline">
-                            Website
-                          </a>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {item.rating ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                              ⭐ {item.rating}
-                            </span>
-                          ) : <span className="text-gray-400">-</span>}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1 cursor-pointer hover:text-indigo-600" onClick={(e) => { e.stopPropagation(); requestSort('reviews'); }}>
-                          {item.reviews ? `${item.reviews} reviews ${sortConfig?.key === 'reviews' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}` : 'No reviews'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-500 max-w-xs truncate" title={item.address}>{item.address}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        {item.phone ? (
-                          <a
-                            href={formatWhatsAppLink(item.phone, item.name)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  {paginatedResults.map((item, pageIndex) => {
+                    const globalIndex = pageStartIndex + pageIndex;
+                    const isChecked = selectedIndices.has(globalIndex);
+                    return (
+                      <tr
+                        key={globalIndex}
+                        className={`hover:bg-gray-50 cursor-pointer transition-colors ${isChecked ? 'bg-indigo-50' : ''}`}
+                        onClick={() => toggleRow(globalIndex)}
+                      >
+                        <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleRow(globalIndex)}
+                            className="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                          {item.website && (
+                            <a
+                              href={item.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-indigo-600 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Website
+                            </a>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {item.rating ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                ⭐ {item.rating}
+                              </span>
+                            ) : <span className="text-gray-400">-</span>}
+                          </div>
+                          <div
+                            className="text-xs text-gray-500 mt-1 cursor-pointer hover:text-indigo-600"
+                            onClick={(e) => { e.stopPropagation(); requestSort('reviews'); }}
                           >
-                            Chat WA ({item.phone})
-                          </a>
-                        ) : (
-                          <span className="text-xs text-gray-400">No Phone</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                            {item.reviews ? `${item.reviews} reviews ${sortConfig?.key === 'reviews' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}` : 'No reviews'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-500 max-w-xs truncate" title={item.address}>{item.address}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center" onClick={(e) => e.stopPropagation()}>
+                          {item.phone ? (
+                            <a
+                              href={formatWhatsAppLink(item.phone, item.name)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            >
+                              Chat WA ({item.phone})
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-400">No Phone</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
+            {/* ── Pagination ── */}
             {totalPages > 1 && (
               <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 flex items-center justify-between">
                 <div className="flex-1 flex justify-between sm:hidden">
