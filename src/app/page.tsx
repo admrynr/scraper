@@ -36,7 +36,7 @@ export default function Home() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+  const itemsPerPage = 25;
 
   // Sorting & Filtering
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
