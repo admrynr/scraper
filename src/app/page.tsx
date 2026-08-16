@@ -349,22 +349,28 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="bg-indigo-600 px-6 py-4">
-          <h1 className="text-2xl font-bold text-white">Google Maps Scraper CRM</h1>
+          <h1 className="text-2xl font-bold text-white">CariProspek CRM</h1>
           <p className="text-indigo-100 text-sm">Serverless Leads Extractor &amp; Prospecting Tool</p>
         </div>
 
         <div className="p-6">
           <form onSubmit={handleScrape} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">SerpAPI Key (Auto-saved)</label>
+            <div className="relative group">
+              <label className="block text-sm font-medium text-gray-700">
+                SerpAPI Key (Auto-saved)
+                <span className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-600 text-xs cursor-help">?</span>
+              </label>
               <input
                 type="text"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="Enter your API Key"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border text-gray-900"
                 required
               />
+              <div className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded p-3 mt-1 shadow-lg border border-gray-700 max-w-xs">
+                Daftar di <a href="https://serpapi.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">https://serpapi.com/</a> untuk mendapatkan API Key.
+              </div>
             </div>
 
             <div>
@@ -374,7 +380,7 @@ export default function Home() {
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 placeholder="e.g. Barbershop, Cafe"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border text-gray-900"
                 required
               />
             </div>
@@ -388,7 +394,7 @@ export default function Home() {
                     setSelectedProvinceId(e.target.value);
                     setProvinceName(e.target.options[e.target.selectedIndex].text);
                   }}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white text-gray-900"
                   required
                 >
                   <option value="">-- Pilih Provinsi --</option>
@@ -406,7 +412,7 @@ export default function Home() {
                     setSelectedCityId(e.target.value);
                     setCityName(e.target.options[e.target.selectedIndex].text);
                   }}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white text-gray-900 disabled:text-gray-500"
                   disabled={!selectedProvinceId}
                   required
                 >
@@ -427,7 +433,7 @@ export default function Home() {
                     setSelectedDistrictId(e.target.value);
                     setDistrictName(e.target.options[e.target.selectedIndex].text);
                   }}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white text-gray-900 disabled:text-gray-500"
                   disabled={!selectedCityId}
                 >
                   <option value="">-- Pilih Kecamatan --</option>
@@ -445,7 +451,7 @@ export default function Home() {
                     setSelectedVillageId(e.target.value);
                     setVillageName(e.target.options[e.target.selectedIndex].text);
                   }}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white text-gray-900 disabled:text-gray-500"
                   disabled={!selectedDistrictId}
                 >
                   <option value="">-- Pilih Kelurahan --</option>
@@ -540,8 +546,8 @@ export default function Home() {
                     onClick={() => setShowExportMenu(prev => prev === 'selected' ? null : 'selected')}
                     disabled={selectedIndices.size === 0}
                     className={`text-sm px-4 py-2 rounded-md transition flex items-center gap-1 ${selectedIndices.size > 0
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       }`}
                   >
                     Export Dipilih ({selectedIndices.size})
@@ -580,7 +586,7 @@ export default function Home() {
               <textarea
                 value={waTemplate}
                 onChange={(e) => setWaTemplate(e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2 border"
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2 border text-gray-900"
                 rows={2}
               />
             </div>

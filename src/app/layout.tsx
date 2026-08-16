@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Google Maps Scraper",
-  description: "Google Maps Scraper",
+  title: "CariProspek CRM",
+  description: "CariProspek CRM",
 };
 
 export default function RootLayout({
