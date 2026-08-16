@@ -47,6 +47,9 @@ export default function Home() {
   // We track the *global index* within processedResults so selection survives pagination
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
 
+  // Tooltip state for mobile
+  const [showSerpTooltip, setShowSerpTooltip] = useState(false);
+
   // Load saved states on mount
   useEffect(() => {
     const savedKey = localStorage.getItem('scraperApiKey');
@@ -355,10 +358,22 @@ export default function Home() {
 
         <div className="p-6">
           <form onSubmit={handleScrape} className="space-y-4">
-            <div className="relative group">
-              <label className="block text-sm font-medium text-gray-700">
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 flex items-center">
                 SerpAPI Key (Auto-saved)
-                <span className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-600 text-xs cursor-help">?</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowSerpTooltip(!showSerpTooltip);
+                  }}
+                  onMouseEnter={() => setShowSerpTooltip(true)}
+                  onMouseLeave={() => setShowSerpTooltip(false)}
+                  className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-600 text-xs cursor-help focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  aria-label="Info SerpAPI Key"
+                >
+                  ?
+                </button>
               </label>
               <input
                 type="text"
@@ -368,7 +383,11 @@ export default function Home() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border text-gray-900"
                 required
               />
-              <div className="absolute z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded p-3 mt-1 shadow-lg border border-gray-700 max-w-xs">
+              <div
+                className={`absolute z-10 ${showSerpTooltip ? 'block' : 'hidden'} bg-gray-800 text-white text-xs rounded p-3 mt-1 shadow-lg border border-gray-700 max-w-xs transition-opacity`}
+                onMouseEnter={() => setShowSerpTooltip(true)}
+                onMouseLeave={() => setShowSerpTooltip(false)}
+              >
                 Daftar di <a href="https://serpapi.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">https://serpapi.com/</a> untuk mendapatkan API Key.
               </div>
             </div>
@@ -582,7 +601,7 @@ export default function Home() {
 
             {/* ── WA Template ── */}
             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Template (Use {'{name}'} for dynamic name insertion)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Template WhatsApp (Gunakan {'{name}'} untuk variabel nama dinamis)</label>
               <textarea
                 value={waTemplate}
                 onChange={(e) => setWaTemplate(e.target.value)}
