@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 
-// Vercel serverless function config - extend timeout for scraping
-export const maxDuration = 60; // seconds (requires Vercel Pro for >10s)
-
-interface ScrapeRequestBody {
-  apiKey: string;
-  keyword: string;
-  city: string;
-  district?: string;
-  village?: string;
-  province?: string;
-}
+export const maxDuration = 10; // Vercel Hobby cap
 
 interface PlaceResult {
   keyword_used: string;
-  name: string;
-  address: string;
+  name: string | null;
+  address: string | null;
   phone: string | null;
   website: string | null;
   rating: number | null;
@@ -26,110 +18,182 @@ interface PlaceResult {
   village: string;
 }
 
-async function searchSerpAPI(params: Record<string, string>): Promise<any> {
-  const url = new URL('https://serpapi.com/search.json');
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(key, value);
+async function fetchSerpPage(url: string): Promise<any> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 7500); // 7.5s per request
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`SerpAPI error (${response.status}): ${text}`);
+    }
+    return response.json();
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') throw new Error('TIMEOUT');
+    throw err;
   }
-
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`SerpAPI request failed (${response.status}): ${errorText}`);
-  }
-
-  return response.json();
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body: ScrapeRequestBody = await request.json();
-    const { apiKey, keyword, city, district = '', village = '', province = '' } = body;
+  // 1. Auth check
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Silakan login terlebih dahulu.' }, { status: 401 });
+  }
 
-    if (!apiKey || !keyword || !city) {
-      return NextResponse.json(
-        { error: 'Missing required fields: apiKey, keyword, and city are required' },
-        { status: 400 }
-      );
-    }
+  const adminClient = createAdminClient();
 
-    // Construct location string: "di village district city province"
-    const locationParts: string[] = [];
-    if (village) locationParts.push(village);
-    if (district) locationParts.push(district);
-    locationParts.push(city);
-    if (province) locationParts.push(province);
-    const locationStr = locationParts.join(' ');
+  // 2. Check user is approved
+  const { data: profile } = await adminClient
+    .from('profiles')
+    .select('is_approved, role')
+    .eq('id', user.id)
+    .single();
 
-    const keywordsList = keyword.split(',').map(k => k.trim()).filter(k => k);
-    const data: PlaceResult[] = [];
-    const seenPlaces = new Set<string>();
-
-    for (const kw of keywordsList) {
-      const searchQuery = `${kw} di ${locationStr}`;
-      let start = 0;
-
-      // Pagination loop — increment `start` by 20 each page (same as Python library)
-      while (true) {
-        const params: Record<string, string> = {
-          engine: 'google_maps',
-          q: searchQuery,
-          type: 'search',
-          api_key: apiKey,
-          start: String(start),
-        };
-
-        let results: any;
-        try {
-          results = await searchSerpAPI(params);
-        } catch (err) {
-          // If a page fails, stop pagination for this keyword but don't throw
-          console.error(`SerpAPI page error at start=${start}:`, err);
-          break;
-        }
-
-        const places = results.local_results || [];
-        if (places.length === 0) break;
-
-        for (const place of places) {
-          const placeId = place.place_id;
-          const title = place.title || '';
-          const address = place.address || '';
-
-          // Deduplication
-          const uniqueId = placeId || `${title}_${address}`;
-          if (seenPlaces.has(uniqueId)) continue;
-          seenPlaces.add(uniqueId);
-
-          data.push({
-            keyword_used: kw,
-            name: place.title || null,
-            address: place.address || null,
-            phone: place.phone || null,
-            website: place.website || null,
-            rating: place.rating || null,
-            reviews: place.reviews || null,
-            province,
-            city,
-            district,
-            village,
-          });
-        }
-
-        // If no more pages available, stop
-        if (!results.serpapi_pagination?.next) break;
-
-        // Move to next page
-        start += 20;
-      }
-    }
-
-    return NextResponse.json(data);
-  } catch (error: any) {
-    console.error('Scrape API error:', error);
+  if (!profile?.is_approved) {
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
+      { error: 'Akun Anda belum disetujui admin. Silakan tunggu persetujuan.' },
+      { status: 403 }
     );
   }
+
+  // 3. Get active API key from DB
+  const { data: activeKey } = await adminClient
+    .from('serp_api_keys')
+    .select('id, api_key, quota_exhausted')
+    .eq('is_active', true)
+    .single();
+
+  if (!activeKey) {
+    return NextResponse.json(
+      { error: 'Belum ada API key aktif. Hubungi admin untuk mengatur API key.' },
+      { status: 503 }
+    );
+  }
+
+  if (activeKey.quota_exhausted) {
+    return NextResponse.json(
+      { error: 'Kuota SerpAPI habis. Admin sedang menyiapkan API key baru.' },
+      { status: 503 }
+    );
+  }
+
+  // 4. Parse request body
+  const body = await request.json();
+  const { keyword, city, district = '', village = '', province = '' } = body;
+
+  if (!keyword || !city) {
+    return NextResponse.json({ error: 'Keyword dan kota wajib diisi.' }, { status: 400 });
+  }
+
+  const locationParts: string[] = [];
+  if (village) locationParts.push(village);
+  if (district) locationParts.push(district);
+  locationParts.push(city);
+  if (province) locationParts.push(province);
+  const locationStr = locationParts.join(' ');
+
+  const keywordsList = keyword.split(',').map((k: string) => k.trim()).filter(Boolean);
+  const data: PlaceResult[] = [];
+  const seenPlaces = new Set<string>();
+  let quotaExhausted = false;
+  let partialReturn = false;
+  const MAX_PAGES = 2; // Cap at 2 pages per keyword (40 results) to stay within 10s
+
+  for (const kw of keywordsList) {
+    if (partialReturn) break;
+    const searchQuery = `${kw} di ${locationStr}`;
+    let start = 0;
+    let page = 0;
+
+    while (page < MAX_PAGES) {
+      const url = new URL('https://serpapi.com/search.json');
+      url.searchParams.set('engine', 'google_maps');
+      url.searchParams.set('q', searchQuery);
+      url.searchParams.set('type', 'search');
+      url.searchParams.set('api_key', activeKey.api_key);
+      url.searchParams.set('start', String(start));
+
+      let results: any;
+      try {
+        results = await fetchSerpPage(url.toString());
+      } catch (err: any) {
+        if (err.message === 'TIMEOUT') {
+          partialReturn = true;
+          break; // Return what we have so far
+        }
+        // Check for quota exhaustion
+        const msg = err.message || '';
+        if (
+          msg.includes('out of searches') ||
+          msg.includes('credit') ||
+          msg.includes('quota') ||
+          msg.includes('limit reached')
+        ) {
+          quotaExhausted = true;
+          // Flag in DB for admin notification
+          await adminClient
+            .from('serp_api_keys')
+            .update({ quota_exhausted: true })
+            .eq('id', activeKey.id);
+        }
+        break;
+      }
+
+      // Check for quota error in response body
+      if (results?.error) {
+        const errMsg = String(results.error).toLowerCase();
+        if (
+          errMsg.includes('out of searches') ||
+          errMsg.includes('credit') ||
+          errMsg.includes('quota') ||
+          errMsg.includes('limit')
+        ) {
+          quotaExhausted = true;
+          await adminClient
+            .from('serp_api_keys')
+            .update({ quota_exhausted: true })
+            .eq('id', activeKey.id);
+        }
+        break;
+      }
+
+      const places = results.local_results || [];
+      if (places.length === 0) break;
+
+      for (const place of places) {
+        const uniqueId = place.place_id || `${place.title}_${place.address}`;
+        if (seenPlaces.has(uniqueId)) continue;
+        seenPlaces.add(uniqueId);
+        data.push({
+          keyword_used: kw,
+          name: place.title || null,
+          address: place.address || null,
+          phone: place.phone || null,
+          website: place.website || null,
+          rating: place.rating || null,
+          reviews: place.reviews || null,
+          province,
+          city,
+          district,
+          village,
+        });
+      }
+
+      if (!results.serpapi_pagination?.next) break;
+      start += 20;
+      page++;
+    }
+  }
+
+  // Return results with optional warnings
+  const response: any = data;
+  const headers: Record<string, string> = {};
+  if (partialReturn) headers['X-Partial-Results'] = 'true';
+  if (quotaExhausted) headers['X-Quota-Exhausted'] = 'true';
+
+  return NextResponse.json(response, { headers });
 }
