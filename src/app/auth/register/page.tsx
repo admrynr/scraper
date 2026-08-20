@@ -31,7 +31,7 @@ export default function RegisterPage() {
     }
     setEmailStatus('checking');
     const timer = setTimeout(async () => {
-      const res = await fetch(`/api/auth/check?type=email&value=${encodeURIComponent(email)}`);
+      const res = await fetch(`/next-api/auth/check?type=email&value=${encodeURIComponent(email)}`);
       const data = await res.json();
       if (data.exists) {
         setEmailStatus('error'); setEmailMsg('Email sudah terdaftar.');
@@ -52,7 +52,7 @@ export default function RegisterPage() {
     }
     setPhoneStatus('checking');
     const timer = setTimeout(async () => {
-      const res = await fetch(`/api/auth/check?type=phone&value=${encodeURIComponent(phone)}`);
+      const res = await fetch(`/next-api/auth/check?type=phone&value=${encodeURIComponent(phone)}`);
       const data = await res.json();
       if (data.exists) {
         setPhoneStatus('error'); setPhoneMsg('Nomor telepon sudah terdaftar.');
@@ -76,7 +76,7 @@ export default function RegisterPage() {
     if (!canSubmit) return;
     setLoading(true); setError(null);
 
-    const res = await fetch('/api/auth/register', {
+    const res = await fetch('/next-api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, full_name: fullName, phone: phone || undefined }),

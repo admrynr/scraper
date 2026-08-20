@@ -34,42 +34,42 @@ export default function AdminPage() {
   }, []);
 
   const loadUsers = async () => {
-    const res = await fetch('/api/admin/users');
+    const res = await fetch('/next-api/admin/users');
     if (res.ok) { const d = await res.json(); setUsers(d); }
     setLoading(false);
   };
 
   const loadApiKeys = async () => {
-    const res = await fetch('/api/admin/apikey');
+    const res = await fetch('/next-api/admin/apikey');
     if (res.ok) { const d = await res.json(); setApiKeys(d.keys); setQuotaInfo(d.quotaInfo); }
   };
 
   const updateUser = async (userId: string, updates: any) => {
-    const res = await fetch('/api/admin/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, updates }) });
+    const res = await fetch('/next-api/admin/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, updates }) });
     if (res.ok) { notify('ok', 'Berhasil diupdate!'); loadUsers(); } else { notify('err', 'Gagal update.'); }
   };
 
   const deleteUser = async (userId: string, email: string) => {
     if (!confirm(`Hapus user ${email}?`)) return;
-    const res = await fetch(`/api/admin/users?userId=${userId}`, { method: 'DELETE' });
+    const res = await fetch(`/next-api/admin/users?userId=${userId}`, { method: 'DELETE' });
     if (res.ok) { notify('ok', 'User dihapus.'); loadUsers(); } else { notify('err', 'Gagal hapus.'); }
   };
 
   const addApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyValue.trim()) return;
-    const res = await fetch('/api/admin/apikey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: newKeyValue, label: newKeyLabel || 'Key Baru', set_active: newKeyActive }) });
+    const res = await fetch('/next-api/admin/apikey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: newKeyValue, label: newKeyLabel || 'Key Baru', set_active: newKeyActive }) });
     if (res.ok) { notify('ok', 'API key berhasil ditambahkan!'); setNewKeyValue(''); setNewKeyLabel(''); setNewKeyActive(false); loadApiKeys(); } else { notify('err', 'Gagal menambahkan key.'); }
   };
 
   const setActiveKey = async (id: number) => {
-    const res = await fetch('/api/admin/apikey', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    const res = await fetch('/next-api/admin/apikey', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
     if (res.ok) { notify('ok', 'API key diaktifkan!'); loadApiKeys(); } else { notify('err', 'Gagal mengaktifkan.'); }
   };
 
   const deleteKey = async (id: number) => {
     if (!confirm('Hapus API key ini?')) return;
-    const res = await fetch(`/api/admin/apikey?id=${id}`, { method: 'DELETE' });
+    const res = await fetch(`/next-api/admin/apikey?id=${id}`, { method: 'DELETE' });
     if (res.ok) { notify('ok', 'Key dihapus.'); loadApiKeys(); } else { notify('err', 'Gagal hapus.'); }
   };
 

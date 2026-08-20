@@ -1,6 +1,9 @@
 {
   "functions": {
-    "src/app/api/**": {
+    "api/**": {
+      "maxDuration": 10
+    },
+    "src/app/next-api/**": {
       "maxDuration": 10
     }
   }
