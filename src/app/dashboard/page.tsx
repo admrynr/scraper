@@ -153,44 +153,46 @@ export default function DashboardPage() {
 
   const sortArrow = (key: string) => sortConfig?.key === key ? (sortConfig.direction === 'asc' ? ' ↑' : ' ↓') : '';
 
-  const selStyle = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-400 focus:ring-orange-400 sm:text-sm p-2 border bg-white text-gray-900 disabled:text-gray-500';
-  const inpStyle = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-400 focus:ring-orange-400 sm:text-sm p-2 border text-gray-900';
+  const selStyle = 'select select-bordered w-full';
+  const inpStyle = 'input input-bordered w-full';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
-      <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="bg-orange-500 px-6 py-4 flex justify-between items-start">
+    <div className="min-h-screen bg-base-200 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
+      <div className="w-full max-w-4xl card bg-base-100 shadow-sm border border-base-200 overflow-visible mb-6">
+        <div className="bg-primary text-primary-content px-6 py-4 flex justify-between items-start rounded-t-box">
           <div>
-            <h1 className="text-2xl font-bold text-white">CariProspek CRM</h1>
-            <p className="text-orange-100 text-sm">Serverless Leads Extractor &amp; Prospecting Tool</p>
+            <h1 className="text-2xl font-bold">CariProspek CRM</h1>
+            <p className="text-primary-content/80 text-sm">Serverless Leads Extractor &amp; Prospecting Tool</p>
           </div>
           <div className="flex items-center gap-3 mt-1">
             {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
-              <button onClick={() => router.push('/admin')} className="text-xs bg-orange-400 hover:bg-orange-300 text-white px-3 py-1.5 rounded-md transition font-medium">⚙️ Admin Panel</button>
+              <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost bg-primary-content/20 hover:bg-primary-content/30 border-none">⚙️ Admin Panel</button>
             )}
             <div className="text-right">
-              <p className="text-orange-100 text-xs">{profile?.full_name || profile?.email}</p>
-              <button onClick={logout} className="text-orange-200 text-xs hover:text-white transition underline">Logout</button>
+              <p className="text-primary-content/80 text-xs font-semibold">{profile?.full_name || profile?.email}</p>
+              <button onClick={logout} className="text-primary-content/60 text-xs hover:text-primary-content transition underline">Logout</button>
             </div>
           </div>
         </div>
 
-        <div className="p-6">
-          <form onSubmit={handleScrape} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Keyword <span className="text-gray-400 text-xs font-normal">(Pisahkan koma untuk multi-keyword)</span></label>
+        <div className="card-body p-6">
+          <form onSubmit={handleScrape} className="flex flex-col gap-4">
+            <div className="form-control w-full">
+              <label className="label py-1">
+                <span className="label-text font-semibold">Keyword <span className="text-base-content/40 text-xs font-normal">(Pisahkan koma untuk multi-keyword)</span></span>
+              </label>
               <input type="text" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="e.g. Barbershop, Cafe" className={inpStyle} required />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Provinsi *</label>
+              <div className="form-control w-full">
+                <label className="label py-1"><span className="label-text font-semibold">Provinsi *</span></label>
                 <select value={selectedProvinceId} onChange={e => { setSelectedProvinceId(e.target.value); setProvinceName(e.target.options[e.target.selectedIndex].text); }} className={selStyle} required>
                   <option value="">-- Pilih Provinsi --</option>
                   {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Kota/Kabupaten *</label>
+              <div className="form-control w-full">
+                <label className="label py-1"><span className="label-text font-semibold">Kota/Kabupaten *</span></label>
                 <select value={selectedCityId} onChange={e => { setSelectedCityId(e.target.value); setCityName(e.target.options[e.target.selectedIndex].text); }} className={selStyle} disabled={!selectedProvinceId} required>
                   <option value="">-- Pilih Kota/Kabupaten --</option>
                   {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -198,137 +200,141 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Kecamatan <span className="text-gray-400 text-xs">(Opsional)</span></label>
+              <div className="form-control w-full">
+                <label className="label py-1"><span className="label-text font-semibold">Kecamatan <span className="text-base-content/40 text-xs font-normal">(Opsional)</span></span></label>
                 <select value={selectedDistrictId} onChange={e => { setSelectedDistrictId(e.target.value); setDistrictName(e.target.options[e.target.selectedIndex].text); }} className={selStyle} disabled={!selectedCityId}>
                   <option value="">-- Pilih Kecamatan --</option>
                   {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Kelurahan <span className="text-gray-400 text-xs">(Opsional)</span></label>
+              <div className="form-control w-full">
+                <label className="label py-1"><span className="label-text font-semibold">Kelurahan <span className="text-base-content/40 text-xs font-normal">(Opsional)</span></span></label>
                 <select value={selectedVillageId} onChange={e => { setSelectedVillageId(e.target.value); setVillageName(e.target.options[e.target.selectedIndex].text); }} className={selStyle} disabled={!selectedDistrictId}>
                   <option value="">-- Pilih Kelurahan --</option>
                   {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
                 </select>
               </div>
             </div>
-            <button type="submit" disabled={loading} className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}>
-              {loading ? 'Scraping... (harap tunggu hingga 30 detik)' : 'Mulai Scrape'}
+            <button type="submit" disabled={loading} className="btn btn-primary w-full mt-2">
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Mulai Scrape'}
             </button>
           </form>
 
           {partialResults && !error && (
-            <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-3 text-sm text-yellow-700">
-              ⚠️ Hasil parsial — request melebihi batas waktu server. Data yang berhasil dikumpulkan sudah ditampilkan.
+            <div className="alert alert-warning shadow-sm mt-4 p-3 text-sm rounded-md">
+              <span>⚠️ Hasil parsial — request melebihi batas waktu server. Data yang berhasil dikumpulkan sudah ditampilkan.</span>
             </div>
           )}
           {error && (
-            <div className="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="alert alert-error shadow-sm mt-4 p-3 text-sm rounded-md">
+              <span>{error}</span>
             </div>
           )}
         </div>
       </div>
 
       {results.length > 0 && (
-        <div className="w-full max-w-6xl mt-6">
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-            <div className="bg-gray-100 px-6 py-4 flex flex-col items-start sm:flex-row justify-between sm:items-center gap-4 border-b border-gray-200">
-              <div className="flex flex-col gap-2">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Hasil ({processedResults.length} / {results.length})
-                  {selectedIndices.size > 0 && <span className="ml-2 text-sm font-medium text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">{selectedIndices.size} dipilih</span>}
-                </h2>
-                <div className="flex items-center gap-4 text-sm text-gray-700">
-                  <label className="flex items-center gap-2 cursor-pointer border border-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-50">
-                    <input type="checkbox" checked={filterWebsite} onChange={e => setFilterWebsite(e.target.checked)} className="rounded text-orange-500" /> Has Website
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer border border-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-50">
-                    <input type="checkbox" checked={filterPhone} onChange={e => setFilterPhone(e.target.checked)} className="rounded text-orange-500" /> Has Phone
-                  </label>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
-                <div className="relative">
-                  <button onClick={() => setShowExportMenu(p => p === 'all' ? null : 'all')} className="text-sm bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition flex items-center gap-1">Export Semua ({processedResults.length}) <span className="text-xs opacity-80">▾</span></button>
-                  {showExportMenu === 'all' && (
-                    <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                      <button onClick={() => { exportExcel(processedResults); setShowExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50">📊 Excel (.xlsx)</button>
-                      <button onClick={() => { exportCSV(processedResults); setShowExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50">📄 CSV (.csv)</button>
-                    </div>
-                  )}
-                </div>
-                <div className="relative">
-                  <button onClick={() => setShowExportMenu(p => p === 'selected' ? null : 'selected')} disabled={selectedIndices.size === 0} className={`text-sm px-4 py-2 rounded-md transition flex items-center gap-1 ${selectedIndices.size > 0 ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>Export Dipilih ({selectedIndices.size}) <span className="text-xs opacity-80">▾</span></button>
-                  {showExportMenu === 'selected' && selectedIndices.size > 0 && (
-                    <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                      <button onClick={() => { exportExcel(selectedData); setShowExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">📊 Excel (.xlsx)</button>
-                      <button onClick={() => { exportCSV(selectedData); setShowExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">📄 CSV (.csv)</button>
-                    </div>
-                  )}
-                </div>
-                <button onClick={() => { setResults([]); setSelectedIndices(new Set()); localStorage.removeItem('scraperResults'); }} className="text-sm border border-red-200 text-red-600 px-4 py-2 rounded-md hover:bg-red-50">Clear</button>
+        <div className="w-full max-w-6xl card bg-base-100 shadow-sm border border-base-200">
+          <div className="bg-base-200/50 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-base-200">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-xl font-bold text-base-content">
+                Hasil ({processedResults.length} / {results.length})
+                {selectedIndices.size > 0 && <div className="badge badge-primary ml-2">{selectedIndices.size} dipilih</div>}
+              </h2>
+              <div className="flex items-center gap-4 text-sm">
+                <label className="label cursor-pointer justify-start gap-2 border border-base-300 px-3 py-1.5 rounded-md hover:bg-base-200/50 transition bg-base-100">
+                  <input type="checkbox" checked={filterWebsite} onChange={e => setFilterWebsite(e.target.checked)} className="checkbox checkbox-sm checkbox-primary" /> 
+                  <span className="label-text font-semibold">Has Website</span>
+                </label>
+                <label className="label cursor-pointer justify-start gap-2 border border-base-300 px-3 py-1.5 rounded-md hover:bg-base-200/50 transition bg-base-100">
+                  <input type="checkbox" checked={filterPhone} onChange={e => setFilterPhone(e.target.checked)} className="checkbox checkbox-sm checkbox-primary" /> 
+                  <span className="label-text font-semibold">Has Phone</span>
+                </label>
               </div>
             </div>
-
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Template WhatsApp (Gunakan {'{name}'} untuk nama dinamis)</label>
-              <textarea value={waTemplate} onChange={e => setWaTemplate(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm p-2 border text-gray-900" rows={2} />
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 w-10"><input type="checkbox" checked={isAllPageSelected} ref={el => { if (el) el.indeterminate = isSomePageSelected && !isAllPageSelected; }} onChange={toggleSelectAll} className="rounded text-orange-500 cursor-pointer" /></th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-200" onClick={() => requestSort('name')}>Business Name{sortArrow('name')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-200" onClick={() => requestSort('rating')}>Rating{sortArrow('rating')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-200" onClick={() => requestSort('address')}>Alamat{sortArrow('address')}</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedResults.map((item, pi) => {
-                    const gi = pageStartIndex + pi;
-                    const checked = selectedIndices.has(gi);
-                    return (
-                      <tr key={gi} className={`hover:bg-gray-50 cursor-pointer transition-colors ${checked ? 'bg-orange-50' : ''}`} onClick={() => toggleRow(gi)}>
-                        <td className="px-4 py-4" onClick={e => e.stopPropagation()}><input type="checkbox" checked={checked} onChange={() => toggleRow(gi)} className="rounded text-orange-500 cursor-pointer" /></td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                          {item.website && <a href={item.website} target="_blank" rel="noopener noreferrer" className="text-xs text-orange-500 hover:underline" onClick={e => e.stopPropagation()}>Website</a>}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {item.rating ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">⭐ {item.rating}</span> : <span className="text-gray-400">—</span>}
-                          <div className="text-xs text-gray-500 mt-1">{item.reviews ? `${item.reviews} reviews` : 'No reviews'}</div>
-                        </td>
-                        <td className="px-6 py-4"><div className="text-sm text-gray-500 max-w-xs truncate" title={item.address}>{item.address}</div></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center" onClick={e => e.stopPropagation()}>
-                          {item.phone ? (
-                            <a href={formatWA(item.phone, item.name)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                              Chat WA ({item.phone})
-                            </a>
-                          ) : <span className="text-xs text-gray-400">No Phone</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {totalPages > 1 && (
-              <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 flex items-center justify-between">
-                <p className="text-sm text-gray-700">Menampilkan {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, processedResults.length)} dari {processedResults.length}</p>
-                <nav className="inline-flex rounded-md shadow-sm -space-x-px">
-                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50 disabled:opacity-50">Previous</button>
-                  <span className="px-4 py-2 border border-gray-300 bg-white text-sm text-gray-700">Hal. {currentPage} / {totalPages}</span>
-                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50 disabled:opacity-50">Next</button>
-                </nav>
+            <div className="flex gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
+              <div className="relative">
+                <button onClick={() => setShowExportMenu(p => p === 'all' ? null : 'all')} className="btn btn-sm btn-success text-white">Export Semua ({processedResults.length}) ▾</button>
+                {showExportMenu === 'all' && (
+                  <ul className="menu bg-base-100 border border-base-200 rounded-box shadow-md absolute right-0 mt-1 w-40 z-10 p-1">
+                    <li><a onClick={() => { exportExcel(processedResults); setShowExportMenu(null); }}>📊 Excel (.xlsx)</a></li>
+                    <li><a onClick={() => { exportCSV(processedResults); setShowExportMenu(null); }}>📄 CSV (.csv)</a></li>
+                  </ul>
+                )}
               </div>
-            )}
+              <div className="relative">
+                <button onClick={() => setShowExportMenu(p => p === 'selected' ? null : 'selected')} disabled={selectedIndices.size === 0} className="btn btn-sm btn-primary">Export Dipilih ({selectedIndices.size}) ▾</button>
+                {showExportMenu === 'selected' && selectedIndices.size > 0 && (
+                  <ul className="menu bg-base-100 border border-base-200 rounded-box shadow-md absolute right-0 mt-1 w-40 z-10 p-1">
+                    <li><a onClick={() => { exportExcel(selectedData); setShowExportMenu(null); }}>📊 Excel (.xlsx)</a></li>
+                    <li><a onClick={() => { exportCSV(selectedData); setShowExportMenu(null); }}>📄 CSV (.csv)</a></li>
+                  </ul>
+                )}
+              </div>
+              <button onClick={() => { setResults([]); setSelectedIndices(new Set()); localStorage.removeItem('scraperResults'); }} className="btn btn-sm btn-outline btn-error">Clear</button>
+            </div>
           </div>
+
+          <div className="px-6 py-4 border-b border-base-200 bg-base-200/30">
+            <label className="label py-1"><span className="label-text font-semibold">Template WhatsApp (Gunakan {'{name}'} untuk nama dinamis)</span></label>
+            <textarea value={waTemplate} onChange={e => setWaTemplate(e.target.value)} className="textarea textarea-bordered w-full leading-relaxed" rows={2} />
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="table table-zebra w-full">
+              <thead className="bg-base-200 text-base-content">
+                <tr>
+                  <th className="w-10">
+                    <input type="checkbox" checked={isAllPageSelected} ref={el => { if (el) el.indeterminate = isSomePageSelected && !isAllPageSelected; }} onChange={toggleSelectAll} className="checkbox checkbox-sm checkbox-primary" />
+                  </th>
+                  <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('name')}>Business Name{sortArrow('name')}</th>
+                  <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('rating')}>Rating{sortArrow('rating')}</th>
+                  <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('address')}>Alamat{sortArrow('address')}</th>
+                  <th className="text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedResults.map((item, pi) => {
+                  const gi = pageStartIndex + pi;
+                  const checked = selectedIndices.has(gi);
+                  return (
+                    <tr key={gi} className={`hover cursor-pointer ${checked ? 'bg-primary/5' : ''}`} onClick={() => toggleRow(gi)}>
+                      <td onClick={e => e.stopPropagation()}>
+                        <input type="checkbox" checked={checked} onChange={() => toggleRow(gi)} className="checkbox checkbox-sm checkbox-primary" />
+                      </td>
+                      <td>
+                        <div className="font-semibold text-base-content">{item.name}</div>
+                        {item.website && <a href={item.website} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-medium" onClick={e => e.stopPropagation()}>Website</a>}
+                      </td>
+                      <td className="whitespace-nowrap">
+                        {item.rating ? <div className="badge badge-warning badge-sm gap-1 font-semibold">⭐ {item.rating}</div> : <span className="text-base-content/40 text-xs">—</span>}
+                        <div className="text-xs text-base-content/60 mt-1">{item.reviews ? `${item.reviews} reviews` : 'No reviews'}</div>
+                      </td>
+                      <td><div className="text-sm text-base-content/70 max-w-xs truncate" title={item.address}>{item.address}</div></td>
+                      <td className="whitespace-nowrap text-center" onClick={e => e.stopPropagation()}>
+                        {item.phone ? (
+                          <a href={formatWA(item.phone, item.name)} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-success text-white">
+                            Chat WA ({item.phone})
+                          </a>
+                        ) : <span className="text-xs text-base-content/40">No Phone</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="bg-base-100 px-6 py-4 border-t border-base-200 flex items-center justify-between">
+              <p className="text-sm text-base-content/70">Menampilkan {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, processedResults.length)} dari {processedResults.length}</p>
+              <div className="join border border-base-300">
+                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="join-item btn btn-sm bg-base-100 hover:bg-base-200 border-none">Previous</button>
+                <button className="join-item btn btn-sm bg-base-100 border-none pointer-events-none">Hal. {currentPage} / {totalPages}</button>
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="join-item btn btn-sm bg-base-100 hover:bg-base-200 border-none">Next</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

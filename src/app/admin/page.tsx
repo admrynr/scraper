@@ -81,120 +81,135 @@ export default function AdminPage() {
   const quotaExhausted = activeKey?.quota_exhausted;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f5f9', fontFamily: "'Inter', sans-serif", color: '#111827' }}>
+    <div className="min-h-screen bg-base-200 text-base-content">
       {/* Header */}
-      <div style={{ background: '#fffffffff', borderBottom: '1px solid #e2e8f0', padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '60px', position: 'sticky', top: 0, zIndex: 10, backdropFilter: 'blur(10px)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <span style={{ fontSize: '1.25rem' }}>🔍</span>
-          <span style={{ fontWeight: 700, fontSize: '1rem', color: '#111827' }}>CariProspek</span>
-          <span style={{ background: '#FF642D', color: '#ffffff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: '20px' }}>ADMIN</span>
+      <div className="navbar bg-base-100 border-b border-base-200 sticky top-0 z-10 px-6 backdrop-blur-md bg-opacity-90">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🔍</span>
+            <span className="font-bold text-base-content">CariProspek</span>
+            <div className="badge badge-primary text-xs font-bold uppercase">Admin</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{currentUser?.email}</span>
-          <button onClick={() => router.push('/dashboard')} style={ghostBtn}>Dashboard</button>
-          <button onClick={logout} style={{ ...ghostBtn, color: '#f87171' }}>Logout</button>
+        <div className="flex-none gap-4">
+          <span className="text-sm text-base-content/60 hidden sm:inline-block">{currentUser?.email}</span>
+          <button onClick={() => router.push('/dashboard')} className="btn btn-sm btn-ghost">Dashboard</button>
+          <button onClick={logout} className="btn btn-sm btn-ghost text-error">Logout</button>
         </div>
       </div>
 
       {/* Notification */}
       {msg && (
-        <div style={{ position: 'fixed', top: '70px', right: '1.5rem', zIndex: 50, background: msg.type === 'ok' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', border: `1px solid ${msg.type === 'ok' ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`, color: msg.type === 'ok' ? '#4ade80' : '#f87171', padding: '0.75rem 1.25rem', borderRadius: '10px', fontSize: '0.875rem', backdropFilter: 'blur(10px)' }}>
-          {msg.text}
+        <div className="toast toast-top toast-end z-50 mt-14">
+          <div className={`alert ${msg.type === 'ok' ? 'alert-success' : 'alert-error'} shadow-lg`}>
+            <span>{msg.text}</span>
+          </div>
         </div>
       )}
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem' }}>
+      <div className="max-w-6xl mx-auto p-6">
         {/* Quota Warning */}
         {quotaExhausted && (
-          <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontSize: '1.25rem' }}>🚨</span>
+          <div className="alert alert-error shadow-sm mb-6 rounded-box">
+            <span className="text-2xl">🚨</span>
             <div>
-              <strong style={{ color: '#f87171' }}>Kuota SerpAPI Habis!</strong>
-              <p style={{ color: '#fca5a5', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Tambahkan API key baru dan set sebagai aktif di tab API Keys.</p>
+              <h3 className="font-bold">Kuota SerpAPI Habis!</h3>
+              <div className="text-xs">Tambahkan API key baru dan set sebagai aktif di tab API Keys.</div>
             </div>
           </div>
         )}
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-          {[
-            { label: 'Total User', value: users.length, icon: '👥', color: '#6366f1' },
-            { label: 'Menunggu Approval', value: pendingCount, icon: '⏳', color: '#f59e0b', alert: pendingCount > 0 },
-            { label: 'User Aktif', value: users.filter(u => u.is_approved).length, icon: '✅', color: '#22c55e' },
-            { label: 'Status API Key', value: quotaExhausted ? 'HABIS' : activeKey ? 'Aktif' : 'Belum Ada', icon: quotaExhausted ? '🔴' : activeKey ? '🟢' : '⚪', color: quotaExhausted ? '#ef4444' : activeKey ? '#22c55e' : '#6b7280' },
-          ].map(stat => (
-            <div key={stat.label} style={{ background: `rgba(${stat.alert ? '245,158,11' : '30,41,59'},${stat.alert ? '0.15' : '0.6'})`, border: `1px solid rgba(${stat.alert ? '245,158,11' : '255,255,255'},${stat.alert ? '0.3' : '0.07'})`, borderRadius: '12px', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <span style={{ fontSize: '1.5rem' }}>{stat.icon}</span>
-              <div>
-                <p style={{ color: '#6b7280', fontSize: '0.75rem', margin: 0 }}>{stat.label}</p>
-                <p style={{ color: stat.color, fontSize: '1.25rem', fontWeight: 700, margin: '0.125rem 0 0' }}>{stat.value}</p>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="stat bg-base-100 border border-base-200 rounded-box shadow-sm">
+            <div className="stat-figure text-3xl">👥</div>
+            <div className="stat-title">Total User</div>
+            <div className="stat-value text-primary">{users.length}</div>
+          </div>
+          <div className={`stat bg-base-100 border border-base-200 rounded-box shadow-sm ${pendingCount > 0 ? 'bg-warning/10 border-warning/30' : ''}`}>
+            <div className="stat-figure text-3xl">⏳</div>
+            <div className="stat-title">Menunggu Approval</div>
+            <div className={`stat-value ${pendingCount > 0 ? 'text-warning' : ''}`}>{pendingCount}</div>
+          </div>
+          <div className="stat bg-base-100 border border-base-200 rounded-box shadow-sm">
+            <div className="stat-figure text-3xl">✅</div>
+            <div className="stat-title">User Aktif</div>
+            <div className="stat-value text-success">{users.filter(u => u.is_approved).length}</div>
+          </div>
+          <div className="stat bg-base-100 border border-base-200 rounded-box shadow-sm">
+            <div className="stat-figure text-3xl">{quotaExhausted ? '🔴' : activeKey ? '🟢' : '⚪'}</div>
+            <div className="stat-title">Status API Key</div>
+            <div className={`stat-value text-xl ${quotaExhausted ? 'text-error' : activeKey ? 'text-success' : 'text-base-content/40'}`}>
+              {quotaExhausted ? 'HABIS' : activeKey ? 'Aktif' : 'Belum Ada'}
             </div>
-          ))}
+          </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
-          {(['users', 'apikeys'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem', background: tab === t ? '#FF642D' : '#fffffffff', color: tab === t ? '#ffffff' : '#6b7280', transition: 'all 0.2s' }}>
-              {t === 'users' ? `👥 Users ${pendingCount > 0 ? `(${pendingCount} pending)` : ''}` : '🔑 API Keys'}
-            </button>
-          ))}
+        <div className="tabs tabs-bordered mb-6 border-b border-base-200">
+          <a className={`tab tab-lg font-bold ${tab === 'users' ? 'tab-active !border-primary text-primary' : 'text-base-content/60'}`} onClick={() => setTab('users')}>
+            👥 Users {pendingCount > 0 && <div className="badge badge-warning badge-sm ml-2">{pendingCount}</div>}
+          </a>
+          <a className={`tab tab-lg font-bold ${tab === 'apikeys' ? 'tab-active !border-primary text-primary' : 'text-base-content/60'}`} onClick={() => setTab('apikeys')}>
+            🔑 API Keys
+          </a>
         </div>
 
         {/* USERS TAB */}
         {tab === 'users' && (
-          <div style={{ background: '#fffffffff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden' }}>
+          <div className="card bg-base-100 shadow-sm border border-base-200">
             {/* Filter */}
-            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', display: 'flex', gap: '0.5rem' }}>
+            <div className="p-4 border-b border-base-200 flex gap-2">
               {(['all', 'pending', 'approved'] as const).map(f => (
-                <button key={f} onClick={() => setFilter(f)} style={{ padding: '0.4rem 0.875rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, background: filter === f ? '#ffffff0eb' : '#f8fafc', color: filter === f ? '#FF642D' : '#6b7280' }}>
+                <button key={f} onClick={() => setFilter(f)} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-ghost'}`}>
                   {f === 'all' ? 'Semua' : f === 'pending' ? `Pending (${pendingCount})` : 'Disetujui'}
                 </button>
               ))}
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    {['Nama / Email', 'No. HP', 'Role', 'Status', 'Aksi'].map(h => (
-                      <th key={h} style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                    ))}
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <thead className="bg-base-200 text-base-content">
+                  <tr>
+                    <th>Nama / Email</th>
+                    <th>No. HP</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>Memuat...</td></tr>
+                    <tr><td colSpan={5} className="text-center py-8 text-base-content/50">Memuat...</td></tr>
                   ) : filteredUsers.length === 0 ? (
-                    <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>Tidak ada data</td></tr>
+                    <tr><td colSpan={5} className="text-center py-8 text-base-content/50">Tidak ada data</td></tr>
                   ) : filteredUsers.map(u => (
-                    <tr key={u.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '0.875rem 1.25rem' }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>{u.full_name || '—'}</div>
-                        <div style={{ color: '#6b7280', fontSize: '0.8rem' }}>{u.email}</div>
+                    <tr key={u.id} className="hover">
+                      <td>
+                        <div className="font-bold text-base-content">{u.full_name || '—'}</div>
+                        <div className="text-xs text-base-content/60">{u.email}</div>
                       </td>
-                      <td style={{ padding: '0.875rem 1.25rem', color: '#6b7280', fontSize: '0.85rem' }}>{u.phone || '—'}</td>
-                      <td style={{ padding: '0.875rem 1.25rem' }}>
-                        <select value={u.role} onChange={e => updateUser(u.id, { role: e.target.value })} style={{ background: '#e2e8f0', border: '1px solid #e2e8f0', color: '#111827', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                      <td className="text-base-content/70">{u.phone || '—'}</td>
+                      <td>
+                        <select value={u.role} onChange={e => updateUser(u.id, { role: e.target.value })} className="select select-bordered select-sm">
                           <option value="user">User</option>
                           <option value="admin">Admin</option>
                           <option value="super_admin">Super Admin</option>
                         </select>
                       </td>
-                      <td style={{ padding: '0.875rem 1.25rem' }}>
-                        <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, background: u.is_approved ? 'rgba(34,197,94,0.15)' : 'rgba(245,158,11,0.15)', color: u.is_approved ? '#4ade80' : '#fbbf24' }}>
+                      <td>
+                        <div className={`badge ${u.is_approved ? 'badge-success badge-outline' : 'badge-warning badge-outline'} font-semibold`}>
                           {u.is_approved ? 'Aktif' : 'Pending'}
-                        </span>
+                        </div>
                       </td>
-                      <td style={{ padding: '0.875rem 1.25rem' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <td>
+                        <div className="flex gap-2">
                           {!u.is_approved && (
-                            <button onClick={() => updateUser(u.id, { is_approved: true })} style={{ padding: '0.35rem 0.75rem', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '6px', color: '#4ade80', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>Approve</button>
+                            <button onClick={() => updateUser(u.id, { is_approved: true })} className="btn btn-xs btn-success text-white">Approve</button>
                           )}
                           {u.is_approved && (
-                            <button onClick={() => updateUser(u.id, { is_approved: false })} style={{ padding: '0.35rem 0.75rem', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: '6px', color: '#fbbf24', fontSize: '0.8rem', cursor: 'pointer' }}>Suspend</button>
+                            <button onClick={() => updateUser(u.id, { is_approved: false })} className="btn btn-xs btn-warning text-white">Suspend</button>
                           )}
-                          <button onClick={() => deleteUser(u.id, u.email)} style={{ padding: '0.35rem 0.75rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '6px', color: '#f87171', fontSize: '0.8rem', cursor: 'pointer' }}>Hapus</button>
+                          <button onClick={() => deleteUser(u.id, u.email)} className="btn btn-xs btn-outline btn-error">Hapus</button>
                         </div>
                       </td>
                     </tr>
@@ -207,61 +222,76 @@ export default function AdminPage() {
 
         {/* API KEYS TAB */}
         {tab === 'apikeys' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="flex flex-col gap-6">
             {/* Quota Info */}
             {quotaInfo && (
-              <div style={{ background: '#fffffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: '1rem' }}>
-                <div><p style={{ color: '#6b7280', fontSize: '0.75rem', margin: 0 }}>PLAN</p><p style={{ color: '#FF642D', fontWeight: 700, margin: '0.25rem 0 0' }}>{quotaInfo.plan_name || '—'}</p></div>
-                <div><p style={{ color: '#6b7280', fontSize: '0.75rem', margin: 0 }}>SISA KUOTA</p><p style={{ color: quotaInfo.total_searches_left < 100 ? '#f87171' : '#4ade80', fontWeight: 700, margin: '0.25rem 0 0' }}>{quotaInfo.total_searches_left?.toLocaleString() ?? '—'}</p></div>
-                <div><p style={{ color: '#6b7280', fontSize: '0.75rem', margin: 0 }}>PENGGUNAAN BULAN INI</p><p style={{ color: '#fbbf24', fontWeight: 700, margin: '0.25rem 0 0' }}>{quotaInfo.this_month_usage?.toLocaleString() ?? '—'}</p></div>
+              <div className="stats shadow-sm border border-base-200 bg-base-100 w-full overflow-hidden">
+                <div className="stat">
+                  <div className="stat-title text-xs font-bold tracking-wider">PLAN</div>
+                  <div className="stat-value text-primary text-2xl">{quotaInfo.plan_name || '—'}</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title text-xs font-bold tracking-wider">SISA KUOTA</div>
+                  <div className={`stat-value text-2xl ${quotaInfo.total_searches_left < 100 ? 'text-error' : 'text-success'}`}>{quotaInfo.total_searches_left?.toLocaleString() ?? '—'}</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-title text-xs font-bold tracking-wider">PENGGUNAAN BULAN INI</div>
+                  <div className="stat-value text-warning text-2xl">{quotaInfo.this_month_usage?.toLocaleString() ?? '—'}</div>
+                </div>
               </div>
             )}
 
             {/* Add New Key Form */}
-            <div style={{ background: '#fffffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
-              <h3 style={{ margin: '0 0 1rem', color: '#111827', fontSize: '0.9rem', fontWeight: 600 }}>➕ Tambah API Key Baru</h3>
-              <form onSubmit={addApiKey} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                <div style={{ flex: '1', minWidth: '200px' }}>
-                  <label style={{ color: '#6b7280', fontSize: '0.75rem', display: 'block', marginBottom: '0.4rem' }}>API Key *</label>
-                  <input type="password" value={newKeyValue} onChange={e => setNewKeyValue(e.target.value)} placeholder="Paste SerpAPI key..." required style={adminInputStyle} />
-                </div>
-                <div style={{ flex: '0 0 180px' }}>
-                  <label style={{ color: '#6b7280', fontSize: '0.75rem', display: 'block', marginBottom: '0.4rem' }}>Label</label>
-                  <input type="text" value={newKeyLabel} onChange={e => setNewKeyLabel(e.target.value)} placeholder="Misal: Key Feb 2026" style={adminInputStyle} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem' }}>
-                  <input type="checkbox" id="setActive" checked={newKeyActive} onChange={e => setNewKeyActive(e.target.checked)} />
-                  <label htmlFor="setActive" style={{ color: '#6b7280', fontSize: '0.8rem', cursor: 'pointer' }}>Set Aktif</label>
-                </div>
-                <button type="submit" style={{ padding: '0.65rem 1.25rem', background: '#FF642D', border: 'none', borderRadius: '8px', color: '#ffffff', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}>Tambah</button>
-              </form>
+            <div className="card bg-base-100 shadow-sm border border-base-200">
+              <div className="card-body p-5">
+                <h3 className="card-title text-lg">➕ Tambah API Key Baru</h3>
+                <form onSubmit={addApiKey} className="flex flex-wrap items-end gap-3 mt-2">
+                  <div className="form-control flex-1 min-w-[200px]">
+                    <label className="label py-1"><span className="label-text font-semibold">API Key *</span></label>
+                    <input type="password" value={newKeyValue} onChange={e => setNewKeyValue(e.target.value)} placeholder="Paste SerpAPI key..." required className="input input-bordered w-full" />
+                  </div>
+                  <div className="form-control w-48">
+                    <label className="label py-1"><span className="label-text font-semibold">Label</span></label>
+                    <input type="text" value={newKeyLabel} onChange={e => setNewKeyLabel(e.target.value)} placeholder="Misal: Key Feb 2026" className="input input-bordered w-full" />
+                  </div>
+                  <div className="form-control">
+                    <label className="label cursor-pointer justify-start gap-2 h-12">
+                      <input type="checkbox" checked={newKeyActive} onChange={e => setNewKeyActive(e.target.checked)} className="checkbox checkbox-primary" />
+                      <span className="label-text">Set Aktif</span>
+                    </label>
+                  </div>
+                  <button type="submit" className="btn btn-primary h-12">Tambah</button>
+                </form>
+              </div>
             </div>
 
             {/* Keys List */}
-            <div style={{ background: '#fffffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
-              {apiKeys.length === 0 ? (
-                <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>Belum ada API key. Tambahkan di atas.</div>
-              ) : apiKeys.map(key => (
-                <div key={key.id} style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                    <span style={{ fontSize: '1.25rem' }}>{key.quota_exhausted ? '🔴' : key.is_active ? '🟢' : '⚪'}</span>
-                    <div>
-                      <p style={{ margin: 0, fontWeight: 600, color: '#111827', fontSize: '0.875rem' }}>{key.label}</p>
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                        {key.is_active && <span style={{ fontSize: '0.7rem', background: 'rgba(99,102,241,0.2)', color: '#FF642D', padding: '2px 8px', borderRadius: '20px', fontWeight: 600 }}>AKTIF</span>}
-                        {key.quota_exhausted && <span style={{ fontSize: '0.7rem', background: 'rgba(239,68,68,0.2)', color: '#f87171', padding: '2px 8px', borderRadius: '20px', fontWeight: 600 }}>KUOTA HABIS</span>}
-                        <span style={{ fontSize: '0.7rem', color: '#475569' }}>{new Date(key.created_at).toLocaleDateString('id-ID')}</span>
+            <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+              <div className="divide-y divide-base-200">
+                {apiKeys.length === 0 ? (
+                  <div className="p-8 text-center text-base-content/50">Belum ada API key. Tambahkan di atas.</div>
+                ) : apiKeys.map(key => (
+                  <div key={key.id} className="p-5 flex items-center justify-between gap-4 flex-wrap hover:bg-base-200/30 transition">
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl">{key.quota_exhausted ? '🔴' : key.is_active ? '🟢' : '⚪'}</span>
+                      <div>
+                        <p className="font-bold text-base-content m-0 leading-tight">{key.label}</p>
+                        <div className="flex gap-2 mt-1 items-center">
+                          {key.is_active && <span className="badge badge-primary badge-sm font-bold">AKTIF</span>}
+                          {key.quota_exhausted && <span className="badge badge-error badge-sm font-bold">KUOTA HABIS</span>}
+                          <span className="text-xs text-base-content/50">{new Date(key.created_at).toLocaleDateString('id-ID')}</span>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      {!key.is_active && (
+                        <button onClick={() => setActiveKey(key.id)} className="btn btn-sm btn-outline btn-primary">Set Aktif</button>
+                      )}
+                      <button onClick={() => deleteKey(key.id)} className="btn btn-sm btn-outline btn-error">Hapus</button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    {!key.is_active && (
-                      <button onClick={() => setActiveKey(key.id)} style={{ padding: '0.4rem 0.875rem', background: 'rgba(99,102,241,0.15)', border: '1px solid #ffffff0eb', borderRadius: '6px', color: '#FF642D', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>Set Aktif</button>
-                    )}
-                    <button onClick={() => deleteKey(key.id)} style={{ padding: '0.4rem 0.875rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '6px', color: '#f87171', fontSize: '0.8rem', cursor: 'pointer' }}>Hapus</button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -269,6 +299,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-const ghostBtn: React.CSSProperties = { background: '#fffffffff', border: '1px solid #e2e8f0', color: '#6b7280', borderRadius: '8px', padding: '0.4rem 0.875rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 };
-const adminInputStyle: React.CSSProperties = { width: '100%', padding: '0.65rem 0.875rem', background: '#fffffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#111827', fontSize: '0.875rem', outline: 'none', boxSizing: 'border-box' };
