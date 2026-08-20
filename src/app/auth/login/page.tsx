@@ -38,23 +38,26 @@ export default function LoginPage() {
       return;
     }
 
-    // Check if user is approved
+    // Read role and is_approved from user_metadata in the JWT — no DB query needed.
+    // These values are set during registration via adminClient.auth.admin.createUser().
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_approved, role')
-        .eq('id', user.id)
-        .single();
+      const meta = user.user_metadata ?? {};
+      const role: string = meta.role ?? 'user';
+      const isApproved: boolean = meta.is_approved === true;
+      const isSuperAdmin = role === 'super_admin';
 
-      if (!profile?.is_approved) {
+      console.log('[login] meta:', { role, isApproved, isSuperAdmin });
+
+      // Super admins always allowed in
+      if (!isSuperAdmin && !isApproved) {
         await supabase.auth.signOut();
         setError('Akun Anda belum disetujui admin. Silakan tunggu konfirmasi.');
         setLoading(false);
         return;
       }
 
-      if (['super_admin', 'admin'].includes(profile.role)) {
+      if (isSuperAdmin || role === 'admin') {
         router.push('/admin');
       } else {
         router.push('/dashboard');
@@ -65,52 +68,45 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
+      background: '#f4f5f9',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '1rem',
       fontFamily: "'Inter', -apple-system, sans-serif",
     }}>
-      {/* Ambient glow */}
-      <div style={{
-        position: 'fixed', top: '20%', left: '30%', width: '400px', height: '400px',
-        borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
-        filter: 'blur(40px)', pointerEvents: 'none',
-      }} />
-
       <div style={{
         width: '100%', maxWidth: '420px',
-        background: 'rgba(255,255,255,0.05)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: '24px',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
         padding: '2.5rem',
-        boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
         position: 'relative',
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '56px', height: '56px', borderRadius: '16px',
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            width: '56px', height: '56px', borderRadius: '12px',
+            background: '#FF642D',
             marginBottom: '1rem', fontSize: '1.5rem',
-            boxShadow: '0 8px 24px rgba(99,102,241,0.4)',
+            color: '#fff',
+            boxShadow: '0 4px 14px rgba(255, 100, 45, 0.3)',
           }}>🔍</div>
-          <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+          <h1 style={{ color: '#111827', fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
             CariProspek CRM
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+          <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>
             Masuk ke akun Anda
           </p>
         </div>
 
         {error && (
           <div style={{
-            background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
-            borderRadius: '12px', padding: '0.875rem 1rem', marginBottom: '1.25rem',
-            color: '#fca5a5', fontSize: '0.875rem', lineHeight: '1.5',
+            background: '#fef2f2', border: '1px solid #fecaca',
+            borderRadius: '6px', padding: '0.875rem 1rem', marginBottom: '1.25rem',
+            color: '#dc2626', fontSize: '0.875rem', lineHeight: '1.5',
           }}>
             {error}
           </div>
@@ -118,7 +114,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: '0.8125rem', fontWeight: 500, marginBottom: '0.5rem' }}>
+            <label style={{ display: 'block', color: '#374151', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.5rem' }}>
               Email
             </label>
             <input
@@ -132,7 +128,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: '0.8125rem', fontWeight: 500, marginBottom: '0.5rem' }}>
+            <label style={{ display: 'block', color: '#374151', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.5rem' }}>
               Password
             </label>
             <div style={{ position: 'relative' }}>
@@ -149,7 +145,7 @@ export default function LoginPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+                  background: 'none', border: 'none', color: '#9ca3af',
                   cursor: 'pointer', fontSize: '1.1rem', padding: 0,
                 }}
               >
@@ -163,14 +159,12 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%', padding: '0.875rem',
-              background: loading
-                ? 'rgba(99,102,241,0.4)'
-                : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              border: 'none', borderRadius: '12px',
+              background: loading ? '#fca5a5' : '#FF642D',
+              border: 'none', borderRadius: '6px',
               color: '#fff', fontSize: '0.9375rem', fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: '0.5rem',
-              boxShadow: loading ? 'none' : '0 4px 15px rgba(99,102,241,0.4)',
+              boxShadow: loading ? 'none' : '0 4px 14px rgba(255, 100, 45, 0.3)',
               transition: 'all 0.2s ease',
             }}
           >
@@ -180,11 +174,11 @@ export default function LoginPage() {
 
         <div style={{
           textAlign: 'center', marginTop: '1.5rem',
-          color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem',
+          color: '#6b7280', fontSize: '0.875rem',
         }}>
           Belum punya akun?{' '}
           <Link href="/auth/register" style={{
-            color: '#818cf8', fontWeight: 600, textDecoration: 'none',
+            color: '#FF642D', fontWeight: 600, textDecoration: 'none',
           }}>
             Daftar di sini
           </Link>
@@ -197,10 +191,10 @@ export default function LoginPage() {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.75rem 1rem',
-  background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: '10px',
-  color: '#fff',
+  background: '#ffffff',
+  border: '1px solid #d1d5db',
+  borderRadius: '6px',
+  color: '#111827',
   fontSize: '0.9375rem',
   outline: 'none',
   boxSizing: 'border-box',

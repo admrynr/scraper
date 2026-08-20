@@ -153,24 +153,24 @@ export default function DashboardPage() {
 
   const sortArrow = (key: string) => sortConfig?.key === key ? (sortConfig.direction === 'asc' ? ' ↑' : ' ↓') : '';
 
-  const selStyle = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border bg-white text-gray-900 disabled:text-gray-500';
-  const inpStyle = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border text-gray-900';
+  const selStyle = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-400 focus:ring-orange-400 sm:text-sm p-2 border bg-white text-gray-900 disabled:text-gray-500';
+  const inpStyle = 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-400 focus:ring-orange-400 sm:text-sm p-2 border text-gray-900';
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
       <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="bg-indigo-600 px-6 py-4 flex justify-between items-start">
+        <div className="bg-orange-500 px-6 py-4 flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold text-white">CariProspek CRM</h1>
-            <p className="text-indigo-100 text-sm">Serverless Leads Extractor &amp; Prospecting Tool</p>
+            <p className="text-orange-100 text-sm">Serverless Leads Extractor &amp; Prospecting Tool</p>
           </div>
           <div className="flex items-center gap-3 mt-1">
             {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
-              <button onClick={() => router.push('/admin')} className="text-xs bg-indigo-500 hover:bg-indigo-400 text-white px-3 py-1.5 rounded-md transition font-medium">⚙️ Admin Panel</button>
+              <button onClick={() => router.push('/admin')} className="text-xs bg-orange-400 hover:bg-orange-300 text-white px-3 py-1.5 rounded-md transition font-medium">⚙️ Admin Panel</button>
             )}
             <div className="text-right">
-              <p className="text-indigo-100 text-xs">{profile?.full_name || profile?.email}</p>
-              <button onClick={logout} className="text-indigo-200 text-xs hover:text-white transition underline">Logout</button>
+              <p className="text-orange-100 text-xs">{profile?.full_name || profile?.email}</p>
+              <button onClick={logout} className="text-orange-200 text-xs hover:text-white transition underline">Logout</button>
             </div>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function DashboardPage() {
                 </select>
               </div>
             </div>
-            <button type="submit" disabled={loading} className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}>
+            <button type="submit" disabled={loading} className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}>
               {loading ? 'Scraping... (harap tunggu hingga 30 detik)' : 'Mulai Scrape'}
             </button>
           </form>
@@ -238,14 +238,14 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-2">
                 <h2 className="text-xl font-semibold text-gray-800">
                   Hasil ({processedResults.length} / {results.length})
-                  {selectedIndices.size > 0 && <span className="ml-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{selectedIndices.size} dipilih</span>}
+                  {selectedIndices.size > 0 && <span className="ml-2 text-sm font-medium text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full">{selectedIndices.size} dipilih</span>}
                 </h2>
                 <div className="flex items-center gap-4 text-sm text-gray-700">
                   <label className="flex items-center gap-2 cursor-pointer border border-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-50">
-                    <input type="checkbox" checked={filterWebsite} onChange={e => setFilterWebsite(e.target.checked)} className="rounded text-indigo-600" /> Has Website
+                    <input type="checkbox" checked={filterWebsite} onChange={e => setFilterWebsite(e.target.checked)} className="rounded text-orange-500" /> Has Website
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer border border-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-50">
-                    <input type="checkbox" checked={filterPhone} onChange={e => setFilterPhone(e.target.checked)} className="rounded text-indigo-600" /> Has Phone
+                    <input type="checkbox" checked={filterPhone} onChange={e => setFilterPhone(e.target.checked)} className="rounded text-orange-500" /> Has Phone
                   </label>
                 </div>
               </div>
@@ -260,11 +260,11 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <div className="relative">
-                  <button onClick={() => setShowExportMenu(p => p === 'selected' ? null : 'selected')} disabled={selectedIndices.size === 0} className={`text-sm px-4 py-2 rounded-md transition flex items-center gap-1 ${selectedIndices.size > 0 ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>Export Dipilih ({selectedIndices.size}) <span className="text-xs opacity-80">▾</span></button>
+                  <button onClick={() => setShowExportMenu(p => p === 'selected' ? null : 'selected')} disabled={selectedIndices.size === 0} className={`text-sm px-4 py-2 rounded-md transition flex items-center gap-1 ${selectedIndices.size > 0 ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>Export Dipilih ({selectedIndices.size}) <span className="text-xs opacity-80">▾</span></button>
                   {showExportMenu === 'selected' && selectedIndices.size > 0 && (
                     <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                      <button onClick={() => { exportExcel(selectedData); setShowExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50">📊 Excel (.xlsx)</button>
-                      <button onClick={() => { exportCSV(selectedData); setShowExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50">📄 CSV (.csv)</button>
+                      <button onClick={() => { exportExcel(selectedData); setShowExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">📊 Excel (.xlsx)</button>
+                      <button onClick={() => { exportCSV(selectedData); setShowExportMenu(null); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50">📄 CSV (.csv)</button>
                     </div>
                   )}
                 </div>
@@ -281,7 +281,7 @@ export default function DashboardPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 w-10"><input type="checkbox" checked={isAllPageSelected} ref={el => { if (el) el.indeterminate = isSomePageSelected && !isAllPageSelected; }} onChange={toggleSelectAll} className="rounded text-indigo-600 cursor-pointer" /></th>
+                    <th className="px-4 py-3 w-10"><input type="checkbox" checked={isAllPageSelected} ref={el => { if (el) el.indeterminate = isSomePageSelected && !isAllPageSelected; }} onChange={toggleSelectAll} className="rounded text-orange-500 cursor-pointer" /></th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-200" onClick={() => requestSort('name')}>Business Name{sortArrow('name')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-200" onClick={() => requestSort('rating')}>Rating{sortArrow('rating')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-200" onClick={() => requestSort('address')}>Alamat{sortArrow('address')}</th>
@@ -293,11 +293,11 @@ export default function DashboardPage() {
                     const gi = pageStartIndex + pi;
                     const checked = selectedIndices.has(gi);
                     return (
-                      <tr key={gi} className={`hover:bg-gray-50 cursor-pointer transition-colors ${checked ? 'bg-indigo-50' : ''}`} onClick={() => toggleRow(gi)}>
-                        <td className="px-4 py-4" onClick={e => e.stopPropagation()}><input type="checkbox" checked={checked} onChange={() => toggleRow(gi)} className="rounded text-indigo-600 cursor-pointer" /></td>
+                      <tr key={gi} className={`hover:bg-gray-50 cursor-pointer transition-colors ${checked ? 'bg-orange-50' : ''}`} onClick={() => toggleRow(gi)}>
+                        <td className="px-4 py-4" onClick={e => e.stopPropagation()}><input type="checkbox" checked={checked} onChange={() => toggleRow(gi)} className="rounded text-orange-500 cursor-pointer" /></td>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                          {item.website && <a href={item.website} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline" onClick={e => e.stopPropagation()}>Website</a>}
+                          {item.website && <a href={item.website} target="_blank" rel="noopener noreferrer" className="text-xs text-orange-500 hover:underline" onClick={e => e.stopPropagation()}>Website</a>}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {item.rating ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">⭐ {item.rating}</span> : <span className="text-gray-400">—</span>}

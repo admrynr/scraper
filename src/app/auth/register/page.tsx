@@ -100,10 +100,10 @@ export default function RegisterPage() {
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
               {isSuperAdmin ? '👑' : '✅'}
             </div>
-            <h2 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem' }}>
+            <h2 style={{ color: '#111827', fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem' }}>
               {isSuperAdmin ? 'Akun Super Admin Dibuat!' : 'Pendaftaran Berhasil!'}
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            <p style={{ color: '#6b7280', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
               {isSuperAdmin
                 ? 'Anda terdaftar sebagai Super Admin dan dapat langsung login.'
                 : 'Akun Anda sedang menunggu persetujuan admin. Anda akan mendapat konfirmasi setelah disetujui.'}
@@ -120,10 +120,10 @@ export default function RegisterPage() {
       <div style={{ ...cardStyle, maxWidth: '460px' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={logoStyle}>🔍</div>
-          <h1 style={{ color: '#fff', fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>
+          <h1 style={{ color: '#111827', fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>
             Daftar Akun Baru
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+          <p style={{ color: '#6b7280', fontSize: '0.85rem', marginTop: '0.25rem' }}>
             CariProspek CRM
           </p>
         </div>
@@ -156,7 +156,7 @@ export default function RegisterPage() {
           {/* Phone */}
           <div>
             <label style={labelStyle}>
-              No. Telepon <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>(opsional)</span>
+              No. Telepon <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>(opsional)</span>
               <StatusBadge status={phoneStatus} />
             </label>
             <input
@@ -169,7 +169,7 @@ export default function RegisterPage() {
 
           {/* Password */}
           <div>
-            <label style={labelStyle}>Password * <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem' }}>(min. 8 karakter)</span></label>
+            <label style={labelStyle}>Password * <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>(min. 8 karakter)</span></label>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'} value={password}
@@ -207,9 +207,9 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '1.25rem', color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.25rem', color: '#6b7280', fontSize: '0.875rem' }}>
           Sudah punya akun?{' '}
-          <a href="/auth/login" style={{ color: '#818cf8', fontWeight: 600, textDecoration: 'none' }}>
+          <a href="/auth/login" style={{ color: '#FF642D', fontWeight: 600, textDecoration: 'none' }}>
             Masuk
           </a>
         </div>
@@ -227,7 +227,7 @@ function StatusBadge({ status }: { status: FieldStatus }) {
 
 const pageStyle: React.CSSProperties = {
   minHeight: '100vh',
-  background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
+  background: '#f4f5f9',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   padding: '1.5rem',
   fontFamily: "'Inter', -apple-system, sans-serif",
@@ -235,55 +235,55 @@ const pageStyle: React.CSSProperties = {
 
 const cardStyle: React.CSSProperties = {
   width: '100%', maxWidth: '420px',
-  background: 'rgba(255,255,255,0.05)',
-  backdropFilter: 'blur(20px)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '24px', padding: '2rem',
-  boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+  background: '#ffffff',
+  border: '1px solid #e2e8f0',
+  borderRadius: '8px', padding: '2rem',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
 };
 
 const logoStyle: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  width: '52px', height: '52px', borderRadius: '14px',
-  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+  width: '52px', height: '52px', borderRadius: '12px',
+  background: '#FF642D',
   marginBottom: '0.875rem', fontSize: '1.375rem',
-  boxShadow: '0 8px 24px rgba(99,102,241,0.4)',
+  color: '#fff',
+  boxShadow: '0 4px 14px rgba(255, 100, 45, 0.3)',
 };
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '0.7rem 0.875rem',
-  background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: '10px', color: '#fff', fontSize: '0.9rem',
+  background: '#ffffff',
+  border: '1px solid #d1d5db',
+  borderRadius: '6px', color: '#111827', fontSize: '0.9rem',
   outline: 'none', boxSizing: 'border-box',
 };
 
 const labelStyle: React.CSSProperties = {
-  display: 'block', color: 'rgba(255,255,255,0.7)',
-  fontSize: '0.8rem', fontWeight: 500, marginBottom: '0.4rem',
+  display: 'block', color: '#374151',
+  fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.4rem',
 };
 
 const fieldErrStyle: React.CSSProperties = {
-  color: '#f87171', fontSize: '0.75rem', margin: '0.25rem 0 0',
+  color: '#dc2626', fontSize: '0.75rem', margin: '0.25rem 0 0',
 };
 
 const errorBoxStyle: React.CSSProperties = {
-  background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
-  borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1rem',
-  color: '#fca5a5', fontSize: '0.875rem',
+  background: '#fef2f2', border: '1px solid #fecaca',
+  borderRadius: '6px', padding: '0.75rem 1rem', marginBottom: '1rem',
+  color: '#dc2626', fontSize: '0.875rem',
 };
 
 const btnStyle: React.CSSProperties = {
   display: 'block', width: '100%', padding: '0.875rem',
-  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-  border: 'none', borderRadius: '12px',
+  background: '#FF642D',
+  border: 'none', borderRadius: '6px',
   color: '#fff', fontSize: '0.9375rem', fontWeight: 600,
   cursor: 'pointer', textDecoration: 'none', textAlign: 'center',
-  boxShadow: '0 4px 15px rgba(99,102,241,0.4)',
+  boxShadow: '0 4px 14px rgba(255, 100, 45, 0.3)',
 };
 
 const eyeBtn: React.CSSProperties = {
   position: 'absolute', right: '0.875rem', top: '50%', transform: 'translateY(-50%)',
-  background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+  background: 'none', border: 'none', color: '#9ca3af',
   cursor: 'pointer', fontSize: '1rem', padding: 0,
 };

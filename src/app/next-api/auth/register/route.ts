@@ -61,16 +61,23 @@ export async function POST(request: NextRequest) {
 
     if (!user) throw new Error('User creation failed');
 
-    // Update profile (trigger may have already created it — upsert the role fields)
+    // Upsert profile — handles the race condition where the DB trigger may not
+    // have created the profile row yet when we try to update it.
+    // We wait briefly to give the trigger a chance to fire, then upsert so the
+    // row is created-or-updated in one atomic operation.
+    await new Promise((r) => setTimeout(r, 300));
     await adminClient
       .from('profiles')
-      .update({
-        full_name,
-        phone: phone || null,
-        role: isSuperAdmin ? 'super_admin' : 'user',
-        is_approved: isSuperAdmin,
-      })
-      .eq('id', user.id);
+      .upsert(
+        {
+          id: user.id,
+          full_name,
+          phone: phone || null,
+          role: isSuperAdmin ? 'super_admin' : 'user',
+          is_approved: isSuperAdmin,
+        },
+        { onConflict: 'id' }
+      );
 
     return NextResponse.json({
       success: true,
