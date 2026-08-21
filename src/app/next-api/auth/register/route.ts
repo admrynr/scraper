@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,52 +40,93 @@ export async function POST(request: NextRequest) {
       .filter(Boolean);
     const isSuperAdmin = superAdminEmails.includes(email.toLowerCase());
 
-    // Create auth user via admin client (auto-confirms email, no verification email needed)
-    const { data: { user }, error: createError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-        phone: phone || null,
-        role: isSuperAdmin ? 'super_admin' : 'user',
-        is_approved: isSuperAdmin,
-      },
-    });
+    const siteUrl = request.nextUrl.origin;
 
-    if (createError) {
-      if (createError.message.includes('already registered') || createError.message.includes('already been registered')) {
-        return NextResponse.json({ error: 'Email sudah terdaftar.' }, { status: 409 });
-      }
-      throw createError;
-    }
-
-    if (!user) throw new Error('User creation failed');
-
-    // Upsert profile — handles the race condition where the DB trigger may not
-    // have created the profile row yet when we try to update it.
-    // We wait briefly to give the trigger a chance to fire, then upsert so the
-    // row is created-or-updated in one atomic operation.
-    await new Promise((r) => setTimeout(r, 300));
-    await adminClient
-      .from('profiles')
-      .upsert(
-        {
-          id: user.id,
+    if (isSuperAdmin) {
+      // Super admin: skip email verification, auto-confirm and approve
+      const { data: { user }, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
           full_name,
           phone: phone || null,
-          role: isSuperAdmin ? 'super_admin' : 'user',
-          is_approved: isSuperAdmin,
+          role: 'super_admin',
+          is_approved: true,
         },
+      });
+
+      if (createError) {
+        if (createError.message.includes('already registered') || createError.message.includes('already been registered')) {
+          return NextResponse.json({ error: 'Email sudah terdaftar.' }, { status: 409 });
+        }
+        throw createError;
+      }
+      if (!user) throw new Error('User creation failed');
+
+      await new Promise((r) => setTimeout(r, 300));
+      await adminClient.from('profiles').upsert(
+        { id: user.id, full_name, phone: phone || null, role: 'super_admin', is_approved: true },
         { onConflict: 'id' }
       );
 
+      return NextResponse.json({
+        success: true,
+        isSuperAdmin: true,
+        requiresVerification: false,
+        message: 'Akun super admin berhasil dibuat. Silakan login.',
+      });
+    }
+
+    // Regular user: use signUp (triggers verification email via Brevo SMTP)
+    const anonClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data: signUpData, error: signUpError } = await anonClient.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${siteUrl}/auth/verify-success`,
+        data: {
+          full_name,
+          phone: phone || null,
+          role: 'user',
+          is_approved: false,
+        },
+      },
+    });
+
+    if (signUpError) {
+      if (signUpError.message.includes('already registered') || signUpError.message.includes('User already registered')) {
+        return NextResponse.json({ error: 'Email sudah terdaftar.' }, { status: 409 });
+      }
+      throw signUpError;
+    }
+
+    const newUser = signUpData.user;
+    if (!newUser) throw new Error('User creation failed');
+
+    // Create profile row immediately (trigger may not fire fast enough)
+    await new Promise((r) => setTimeout(r, 300));
+    await adminClient.from('profiles').upsert(
+      {
+        id: newUser.id,
+        email: newUser.email!,
+        full_name,
+        phone: phone || null,
+        role: 'user',
+        is_approved: false,
+      },
+      { onConflict: 'id' }
+    );
+
     return NextResponse.json({
       success: true,
-      isSuperAdmin,
-      message: isSuperAdmin
-        ? 'Akun super admin berhasil dibuat. Silakan login.'
-        : 'Pendaftaran berhasil! Akun Anda menunggu persetujuan admin sebelum bisa digunakan.',
+      isSuperAdmin: false,
+      requiresVerification: true,
+      message: 'Pendaftaran berhasil! Silakan cek email Anda untuk memverifikasi akun.',
     });
   } catch (error: any) {
     console.error('Register error:', error);

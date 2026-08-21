@@ -14,6 +14,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState(''); // email not yet verified
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMsg, setResendMsg] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -25,12 +28,18 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setUnverifiedEmail('');
+    setResendMsg('');
 
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
       if (authError.message.includes('Invalid login credentials')) {
         setError('Email atau password salah. Silakan coba lagi.');
+      } else if (authError.message.includes('Email not confirmed')) {
+        // Supabase blocks login for unverified emails
+        setUnverifiedEmail(email);
+        setError('Email belum diverifikasi. Silakan cek kotak masuk Anda.');
       } else {
         setError(authError.message);
       }
@@ -38,31 +47,49 @@ export default function LoginPage() {
       return;
     }
 
-    // Read role and is_approved from user_metadata in the JWT — no DB query needed.
-    // These values are set during registration via adminClient.auth.admin.createUser().
+    // Get user to check email_confirmed_at
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const meta = user.user_metadata ?? {};
-      const role: string = meta.role ?? 'user';
-      const isApproved: boolean = meta.is_approved === true;
-      const isSuperAdmin = role === 'super_admin';
 
-      console.log('[login] meta:', { role, isApproved, isSuperAdmin });
-
-      // Super admins always allowed in
-      if (!isSuperAdmin && !isApproved) {
-        await supabase.auth.signOut();
-        setError('Akun Anda belum disetujui admin. Silakan tunggu konfirmasi.');
-        setLoading(false);
-        return;
-      }
-
-      if (isSuperAdmin || role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
-      }
+    // Extra guard: if email not confirmed (e.g., signUp flow without blocking)
+    if (user && !user.email_confirmed_at) {
+      await supabase.auth.signOut();
+      setUnverifiedEmail(email);
+      setError('Email belum diverifikasi. Silakan cek kotak masuk Anda.');
+      setLoading(false);
+      return;
     }
+
+    // Fetch profile from DB — the single source of truth for is_approved and role.
+    let profile: any = null;
+    try {
+      const profileRes = await fetch('/next-api/auth/me');
+      if (profileRes.ok) profile = await profileRes.json();
+    } catch (_) {}
+
+    const role: string = profile?.role ?? user?.user_metadata?.role ?? 'user';
+    const isApproved: boolean = profile?.is_approved === true;
+    const isSuperAdmin = role === 'super_admin';
+
+    // if user reaches here, their email is verified (or they are superadmin)
+    // No need to check isApproved anymore, as email verification is sufficient!
+
+    if (isSuperAdmin || role === 'admin') {
+      router.push('/admin');
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true); setResendMsg('');
+    const res = await fetch('/next-api/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: unverifiedEmail }),
+    });
+    const data = await res.json();
+    setResendMsg(res.ok ? 'Email verifikasi telah dikirim ulang! Periksa kotak masuk Anda.' : data.error || 'Gagal mengirim ulang.');
+    setResendLoading(false);
   };
 
   return (
@@ -83,8 +110,24 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="alert alert-error shadow-sm p-3 text-sm rounded-md mb-4">
+            <div className="alert alert-error shadow-sm p-3 text-sm rounded-md mb-2">
               <span>{error}</span>
+            </div>
+          )}
+
+          {/* Resend verification section */}
+          {unverifiedEmail && (
+            <div className="bg-base-200 border border-base-300 rounded-md p-3 mb-4 text-center">
+              {resendMsg ? (
+                <p className={`text-xs font-medium ${resendMsg.includes('Gagal') ? 'text-error' : 'text-success'}`}>{resendMsg}</p>
+              ) : (
+                <>
+                  <p className="text-xs text-base-content/60 mb-2">Belum menerima email verifikasi?</p>
+                  <button onClick={handleResendVerification} disabled={resendLoading} className="btn btn-xs btn-outline btn-primary">
+                    {resendLoading ? <span className="loading loading-spinner loading-xs"></span> : '↩ Kirim ulang email verifikasi'}
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -106,6 +149,9 @@ export default function LoginPage() {
             <div className="form-control w-full">
               <label className="label py-1">
                 <span className="label-text font-semibold">Password</span>
+                <Link href="/auth/forgot-password" className="label-text-alt text-primary hover:underline font-medium">
+                  Lupa password?
+                </Link>
               </label>
               <div className="relative">
                 <input

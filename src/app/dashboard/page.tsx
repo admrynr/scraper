@@ -41,7 +41,11 @@ export default function DashboardPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth/login'); return; }
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if (!data?.is_approved) { await supabase.auth.signOut(); router.push('/auth/login'); return; }
+      if (!data?.is_approved && !user.email_confirmed_at) { 
+        await supabase.auth.signOut(); 
+        router.push('/auth/login'); 
+        return; 
+      }
       setProfile(data);
     });
   }, []);
@@ -77,7 +81,7 @@ export default function DashboardPage() {
     e.preventDefault();
     setLoading(true); setError(null); setResults([]); setPartialResults(false); setCurrentPage(1); setSelectedIndices(new Set());
     try {
-      const res = await fetch('/api/scrape', {
+      const res = await fetch('/next-api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keyword, city: cityName, district: districtName, village: villageName, province: provinceName }),

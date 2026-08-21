@@ -35,8 +35,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages
-  if (user && (pathname === '/auth/login' || pathname === '/auth/register')) {
+  // Redirect authenticated users away from auth pages (but NOT from reset-password/forgot-password)
+  const authOnlyPaths = ['/auth/login', '/auth/register'];
+  if (user && authOnlyPaths.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);

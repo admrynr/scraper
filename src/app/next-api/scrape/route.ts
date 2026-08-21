@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .single();
 
-  if (!profile?.is_approved) {
+  if (!profile?.is_approved && !user.email_confirmed_at) {
     return NextResponse.json(
-      { error: 'Akun Anda belum disetujui admin. Silakan tunggu persetujuan.' },
+      { error: 'Akun Anda belum disetujui admin dan email belum diverifikasi.' },
       { status: 403 }
     );
   }

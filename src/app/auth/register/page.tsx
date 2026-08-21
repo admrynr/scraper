@@ -22,6 +22,51 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [requiresVerification, setRequiresVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMsg, setResendMsg] = useState('');
+
+  const canSubmit =
+    fullName.trim() &&
+    email &&
+    emailStatus === 'ok' &&
+    (phone === '' || phoneStatus === 'ok') &&
+    password.length >= 8 &&
+    password === confirmPassword;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setLoading(true); setError(null);
+
+    const res = await fetch('/next-api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, full_name: fullName, phone: phone || undefined }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      setError(data.error || 'Terjadi kesalahan.');
+    } else {
+      setSuccess(true);
+      setIsSuperAdmin(data.isSuperAdmin);
+      setRequiresVerification(data.requiresVerification);
+    }
+    setLoading(false);
+  };
+
+  const handleResend = async () => {
+    setResendLoading(true); setResendMsg('');
+    const res = await fetch('/next-api/auth/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    setResendMsg(res.ok ? 'Email verifikasi telah dikirim ulang! Periksa kotak masuk Anda.' : data.error || 'Gagal mengirim ulang.');
+    setResendLoading(false);
+  };
 
   // Debounced email uniqueness check
   useEffect(() => {
@@ -63,54 +108,48 @@ export default function RegisterPage() {
     return () => clearTimeout(timer);
   }, [phone]);
 
-  const canSubmit =
-    fullName.trim() &&
-    email &&
-    emailStatus === 'ok' &&
-    (phone === '' || phoneStatus === 'ok') &&
-    password.length >= 8 &&
-    password === confirmPassword;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canSubmit) return;
-    setLoading(true); setError(null);
-
-    const res = await fetch('/next-api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, full_name: fullName, phone: phone || undefined }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || 'Terjadi kesalahan.');
-    } else {
-      setSuccess(true);
-      setIsSuperAdmin(data.isSuperAdmin);
-    }
-    setLoading(false);
-  };
-
   if (success) {
+    if (isSuperAdmin) {
+      return (
+        <div className="min-h-screen bg-base-200 flex items-center justify-center p-4">
+          <div className="card w-full max-w-sm bg-base-100 shadow-sm border border-base-200">
+            <div className="card-body text-center">
+              <div className="text-5xl mb-4">👑</div>
+              <h2 className="text-xl font-bold text-base-content mb-3">Akun Super Admin Dibuat!</h2>
+              <p className="text-sm text-base-content/70 leading-relaxed mb-6">
+                Anda terdaftar sebagai Super Admin dan dapat langsung login.
+              </p>
+              <Link href="/auth/login" className="btn btn-primary w-full">Masuk Sekarang</Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Regular user — needs email verification
     return (
       <div className="min-h-screen bg-base-200 flex items-center justify-center p-4">
         <div className="card w-full max-w-sm bg-base-100 shadow-sm border border-base-200">
           <div className="card-body text-center">
-            <div className="text-5xl mb-4">
-              {isSuperAdmin ? '👑' : '✅'}
-            </div>
-            <h2 className="text-xl font-bold text-base-content mb-3">
-              {isSuperAdmin ? 'Akun Super Admin Dibuat!' : 'Pendaftaran Berhasil!'}
-            </h2>
-            <p className="text-sm text-base-content/70 leading-relaxed mb-6">
-              {isSuperAdmin
-                ? 'Anda terdaftar sebagai Super Admin dan dapat langsung login.'
-                : 'Akun Anda sedang menunggu persetujuan admin. Anda akan mendapat konfirmasi setelah disetujui.'}
+            <div className="text-5xl mb-4">📧</div>
+            <h2 className="text-xl font-bold text-base-content mb-2">Cek Email Anda!</h2>
+            <p className="text-sm text-base-content/70 leading-relaxed mb-4">
+              Kami telah mengirim link verifikasi ke{' '}
+              <span className="font-semibold text-primary">{email}</span>.
+              Klik link tersebut untuk mengaktifkan akun Anda.
             </p>
-            <Link href="/auth/login" className="btn btn-primary w-full">
-              Ke Halaman Login
-            </Link>
+            <div className="alert alert-info shadow-sm p-3 text-xs rounded-md mb-5 text-left">
+              <span>⏳ Setelah email diverifikasi, akun Anda masih perlu <strong>disetujui admin</strong> sebelum bisa login.</span>
+            </div>
+            {resendMsg && (
+              <div className={`alert shadow-sm p-2 text-xs rounded-md mb-3 ${resendMsg.includes('Gagal') ? 'alert-error' : 'alert-success'}`}>
+                <span>{resendMsg}</span>
+              </div>
+            )}
+            <button onClick={handleResend} disabled={resendLoading} className="btn btn-ghost btn-sm mb-2">
+              {resendLoading ? <span className="loading loading-spinner loading-xs"></span> : '↩ Kirim ulang email verifikasi'}
+            </button>
+            <Link href="/auth/login" className="btn btn-outline btn-sm">Kembali ke Login</Link>
           </div>
         </div>
       </div>

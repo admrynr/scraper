@@ -47,12 +47,30 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Only super_admin can assign super_admin role' }, { status: 403 });
   }
 
+  // 1. Update profiles table
   const { error } = await adminClient
     .from('profiles')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', userId);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // 2. CRITICAL: Also sync user_metadata in Supabase Auth so the JWT reflects these changes.
+  //    Without this, login reads stale metadata and blocks approved users.
+  const metaUpdates: Record<string, any> = {};
+  if (updates.is_approved !== undefined) metaUpdates.is_approved = updates.is_approved;
+  if (updates.role !== undefined) metaUpdates.role = updates.role;
+
+  if (Object.keys(metaUpdates).length > 0) {
+    const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(userId, {
+      user_metadata: metaUpdates,
+    });
+    if (authUpdateError) {
+      console.warn('[admin/users PATCH] Failed to sync user_metadata:', authUpdateError.message);
+      // Non-fatal — profile is already updated, just log the warning
+    }
+  }
+
   return NextResponse.json({ success: true });
 }
 
