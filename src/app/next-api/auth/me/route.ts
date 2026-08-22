@@ -19,7 +19,7 @@ export async function GET() {
     // Try to fetch existing profile
     const { data: profile } = await adminClient
       .from('profiles')
-      .select('id, email, full_name, role, is_approved, phone')
+      .select('id, email, full_name, role, is_approved, phone, daily_credits, purchased_credits, last_reset_date')
       .eq('id', user.id)
       .single();
 

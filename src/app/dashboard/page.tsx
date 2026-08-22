@@ -92,6 +92,19 @@ export default function DashboardPage() {
       if (res.headers.get('X-Quota-Exhausted') === 'true') setError('⚠️ Kuota SerpAPI habis. Admin sedang dihubungi untuk mengganti API key.');
       setResults(data);
       localStorage.setItem('scraperResults', JSON.stringify(data));
+      
+      // Deduct credit in UI locally
+      if (profile && profile.role !== 'super_admin') {
+        setProfile((prev: any) => {
+          if (!prev) return prev;
+          const today = new Date().toISOString().split('T')[0];
+          let dc = prev.last_reset_date !== today ? 10 : (prev.daily_credits ?? 10);
+          let pc = prev.purchased_credits ?? 0;
+          if (dc > 0) dc -= 1;
+          else if (pc > 0) pc -= 1;
+          return { ...prev, daily_credits: dc, purchased_credits: pc, last_reset_date: today };
+        });
+      }
     } catch (err: any) { setError(err.message); } finally { setLoading(false); }
   };
 
@@ -157,6 +170,11 @@ export default function DashboardPage() {
 
   const sortArrow = (key: string) => sortConfig?.key === key ? (sortConfig.direction === 'asc' ? ' ↑' : ' ↓') : '';
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const effectiveDailyCredits = profile ? (profile.last_reset_date !== todayStr ? 10 : (profile.daily_credits ?? 10)) : 0;
+  const purchasedCredits = profile?.purchased_credits ?? 0;
+  const totalCredits = profile?.role === 'super_admin' ? 'Unlimited' : (effectiveDailyCredits + purchasedCredits);
+
   const selStyle = 'select select-bordered w-full';
   const inpStyle = 'input input-bordered w-full';
 
@@ -169,8 +187,13 @@ export default function DashboardPage() {
             <p className="text-primary-content/80 text-sm">Serverless Leads Extractor &amp; Prospecting Tool</p>
           </div>
           <div className="flex items-center gap-3 mt-1">
+            {profile && (
+              <div className="bg-primary-content/10 px-3 py-1 rounded-md text-xs font-medium border border-primary-content/20 flex flex-col items-end">
+                <span>Credits: <strong className="text-sm">{totalCredits}</strong></span>
+              </div>
+            )}
             {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
-              <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost bg-primary-content/20 hover:bg-primary-content/30 border-none">⚙️ Admin Panel</button>
+              <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost bg-primary-content/20 hover:bg-primary-content/30 border-none">⚙️ Admin</button>
             )}
             <div className="text-right">
               <p className="text-primary-content/80 text-xs font-semibold">{profile?.full_name || profile?.email}</p>

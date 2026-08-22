@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
 
   const adminClient = createAdminClient();
 
-  // 2. Check user is approved
+  // 2. Check user is approved & process credits
   const { data: profile } = await adminClient
     .from('profiles')
-    .select('is_approved, role')
+    .select('is_approved, role, daily_credits, purchased_credits, last_reset_date')
     .eq('id', user.id)
     .single();
 
@@ -58,6 +58,39 @@ export async function POST(request: NextRequest) {
       { error: 'Akun Anda belum disetujui admin dan email belum diverifikasi.' },
       { status: 403 }
     );
+  }
+
+  // Credit System Logic
+  const today = new Date().toISOString().split('T')[0];
+  let dailyCredits = profile?.daily_credits ?? 10;
+  const purchasedCredits = profile?.purchased_credits ?? 0;
+  
+  // Reset daily credits if it's a new day
+  if (profile?.last_reset_date !== today) {
+    dailyCredits = 10;
+    await adminClient
+      .from('profiles')
+      .update({ daily_credits: 10, last_reset_date: today })
+      .eq('id', user.id);
+  }
+
+  const isSuperAdmin = profile?.role === 'super_admin';
+  const hasCredits = (dailyCredits + purchasedCredits) > 0;
+
+  if (!isSuperAdmin && !hasCredits) {
+    return NextResponse.json(
+      { error: 'Kredit harian scraping Anda habis (0). Silakan tunggu besok atau beli kredit tambahan.' },
+      { status: 402 } // 402 Payment Required
+    );
+  }
+
+  // Deduct 1 credit before scraping
+  if (!isSuperAdmin) {
+    if (dailyCredits > 0) {
+      await adminClient.from('profiles').update({ daily_credits: dailyCredits - 1 }).eq('id', user.id);
+    } else if (purchasedCredits > 0) {
+      await adminClient.from('profiles').update({ purchased_credits: purchasedCredits - 1 }).eq('id', user.id);
+    }
   }
 
   // 3. Get active API key from DB
