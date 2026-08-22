@@ -234,7 +234,7 @@ export default async function Home() {
               <form className="flex flex-col md:flex-row gap-3 max-w-xl mx-auto">
                 <input type="text" placeholder="Nama Anda" className="input input-bordered w-full bg-base-100" />
                 <input type="email" placeholder="Email Anda" className="input input-bordered w-full bg-base-100" />
-                <button type="button" className="btn btn-primary whitespace-nowrap" onClick={() => alert('Fitur langganan email sedang dikembangkan.')}>Kirimkan Panduan</button>
+                <button type="submit" className="btn btn-primary whitespace-nowrap">Kirimkan Panduan</button>
               </form>
               <p className="text-xs text-base-content/50 mt-4">Kami menjaga privasi Anda. Tidak ada spam.</p>
             </div>
