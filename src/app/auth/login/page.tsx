@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -97,13 +98,10 @@ export default function LoginPage() {
       <div className="card w-full max-w-sm bg-base-100 shadow-sm border border-base-200">
         <div className="card-body">
           {/* Logo */}
-          <div className="text-center mb-4">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-content text-xl shadow-[0_4px_14px_rgba(255,100,45,0.3)] mb-3">
-              🔍
+          <div className="flex flex-col items-center text-center mb-4">
+            <div className="mb-2">
+              <Logo size="lg" />
             </div>
-            <h1 className="text-xl font-bold text-base-content">
-              CariProspek CRM
-            </h1>
             <p className="text-sm text-base-content/60 mt-1">
               Masuk ke akun Anda
             </p>

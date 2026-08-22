@@ -1,5 +1,5 @@
 -- ============================================================
--- CariProspek CRM — Supabase Schema Setup
+-- Prospekto CRM — Supabase Schema Setup
 -- Jalankan di: Supabase Dashboard → SQL Editor
 -- ============================================================
 

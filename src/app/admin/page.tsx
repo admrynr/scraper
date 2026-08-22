@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Logo from '@/components/Logo';
 
 type Profile = { id: string; email: string; phone: string | null; full_name: string | null; role: string; is_approved: boolean; created_at: string; };
 type ApiKey = { id: number; label: string; is_active: boolean; quota_exhausted: boolean; created_at: string; };
@@ -85,9 +86,8 @@ export default function AdminPage() {
       {/* Header */}
       <div className="navbar bg-base-100 border-b border-base-200 sticky top-0 z-10 px-6 backdrop-blur-md bg-opacity-90">
         <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🔍</span>
-            <span className="font-bold text-base-content">CariProspek</span>
+          <div className="flex items-center gap-3">
+            <Logo href="/admin" />
             <div className="badge badge-primary text-xs font-bold uppercase">Admin</div>
           </div>
         </div>

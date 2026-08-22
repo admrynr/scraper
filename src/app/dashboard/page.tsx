@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/client';
+import Logo from '@/components/Logo';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' } | null;
 
@@ -181,23 +182,23 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-base-200 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
       <div className="w-full max-w-4xl card bg-base-100 shadow-sm border border-base-200 overflow-visible mb-6">
-        <div className="bg-primary text-primary-content px-6 py-4 flex justify-between items-start rounded-t-box">
-          <div>
-            <h1 className="text-2xl font-bold">CariProspek CRM</h1>
-            <p className="text-primary-content/80 text-sm">Serverless Leads Extractor &amp; Prospecting Tool</p>
+        <div className="bg-base-100 border-b border-base-300 px-6 py-4 flex justify-between items-center rounded-t-box">
+          <div className="flex items-center gap-3">
+            <Logo href="/dashboard" size="lg" />
+            <span className="badge badge-primary text-xs font-bold uppercase tracking-wider">CRM</span>
           </div>
           <div className="flex items-center gap-3 mt-1">
             {profile && (
-              <div className="bg-primary-content/10 px-3 py-1 rounded-md text-xs font-medium border border-primary-content/20 flex flex-col items-end">
-                <span>Credits: <strong className="text-sm">{totalCredits}</strong></span>
+              <div className="bg-primary/10 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/20 flex flex-col items-end text-base-content">
+                <span>Credits: <strong className="text-sm font-bold text-primary">{totalCredits}</strong></span>
               </div>
             )}
             {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
-              <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost bg-primary-content/20 hover:bg-primary-content/30 border-none">⚙️ Admin</button>
+              <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost border border-base-300">⚙️ Admin</button>
             )}
             <div className="text-right">
-              <p className="text-primary-content/80 text-xs font-semibold">{profile?.full_name || profile?.email}</p>
-              <button onClick={logout} className="text-primary-content/60 text-xs hover:text-primary-content transition underline">Logout</button>
+              <p className="text-base-content/80 text-xs font-semibold">{profile?.full_name || profile?.email}</p>
+              <button onClick={logout} className="text-base-content/50 text-xs hover:text-error transition underline">Logout</button>
             </div>
           </div>
         </div>

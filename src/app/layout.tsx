@@ -14,8 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CariProspek CRM",
-  description: "CariProspek CRM",
+  title: "Prospekto CRM - Platform Ekstraksi Data Prospek B2B & B2C",
+  description: "Prospekto CRM - Ekstrak data prospek bisnis lokal dan otomatisasi outreach secara efisien.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" }
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
       .filter(Boolean);
     const isSuperAdmin = superAdminEmails.includes(email.toLowerCase());
 
-    const siteUrl = request.nextUrl.origin;
+    // Prioritize explicit SITE_URL env for production (Vercel serverless may return internal origin)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || request.nextUrl.origin;
 
     if (isSuperAdmin) {
       // Super admin: skip email verification, auto-confirm and approve

@@ -1,4 +1,4 @@
-# Setup Guide — CariProspek CRM Auth
+# Setup Guide — Prospekto CRM Auth
 
 ## Step 1: Jalankan SQL Schema di Supabase
 
@@ -14,7 +14,7 @@
 Setelah menjalankan SQL schema:
 
 1. Buka `d:\ADAM\project\scraping\scraper-gui\.env.local`
-2. Edit baris `SUPER_ADMIN_EMAILS=admin@cariprospek.com` → ganti dengan email Anda
+2. Edit baris `SUPER_ADMIN_EMAILS=admin@prospekto.com` → ganti dengan email Anda
 3. Daftar via halaman `/auth/register` menggunakan email tersebut
 4. Akun otomatis mendapat role `super_admin` dan langsung bisa login
 

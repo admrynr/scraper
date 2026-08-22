@@ -58,3 +58,18 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Logo Theme Variant Rules */
+.logo-dark-variant {
+  display: none !important;
+}
+.logo-light-variant {
+  display: block !important;
+}
+
+[data-theme="dark"] .logo-light-variant {
+  display: none !important;
+}
+[data-theme="dark"] .logo-dark-variant {
+  display: block !important;
+}
