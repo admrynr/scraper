@@ -128,7 +128,7 @@ export default function DashboardPage() {
         setProfile((prev: any) => {
           if (!prev) return prev;
           const today = new Date().toISOString().split('T')[0];
-          let dc = prev.last_reset_date !== today ? 10 : (prev.daily_credits ?? 10);
+          let dc = prev.last_reset_date !== today ? 5 : (prev.daily_credits ?? 5);
           let pc = prev.purchased_credits ?? 0;
           if (dc > 0) dc -= 1;
           else if (pc > 0) pc -= 1;
@@ -201,7 +201,7 @@ export default function DashboardPage() {
   const sortArrow = (key: string) => sortConfig?.key === key ? (sortConfig.direction === 'asc' ? ' ↑' : ' ↓') : '';
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const effectiveDailyCredits = profile ? (profile.last_reset_date !== todayStr ? 10 : (profile.daily_credits ?? 10)) : 0;
+  const effectiveDailyCredits = profile ? (profile.last_reset_date !== todayStr ? 5 : (profile.daily_credits ?? 5)) : 0;
   const purchasedCredits = profile?.purchased_credits ?? 0;
   const totalCredits = profile?.role === 'super_admin' ? 'Unlimited' : (effectiveDailyCredits + purchasedCredits);
 
