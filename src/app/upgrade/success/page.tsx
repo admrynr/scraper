@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Logo from '@/components/Logo';
 
-export default function UpgradeSuccessPage() {
+function UpgradeSuccessContent() {
   const router = useRouter();
   const params = useSearchParams();
   const orderId = params.get('order_id');
@@ -29,7 +29,7 @@ export default function UpgradeSuccessPage() {
       else setStatus('pending');
     };
     poll();
-  }, [orderId]);
+  }, [orderId, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-200 to-primary/10 flex flex-col items-center justify-center px-4">
@@ -80,5 +80,25 @@ export default function UpgradeSuccessPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function UpgradeSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-base-200 to-primary/10 flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="mb-6">
+            <Logo href="/dashboard" size="lg" />
+          </div>
+          <div className="card bg-base-100 shadow-xl p-8">
+            <span className="loading loading-spinner loading-lg text-primary mx-auto mb-4" />
+            <h2 className="text-xl font-bold">Memuat...</h2>
+          </div>
+        </div>
+      </div>
+    }>
+      <UpgradeSuccessContent />
+    </Suspense>
   );
 }
