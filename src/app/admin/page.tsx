@@ -7,14 +7,16 @@ import Logo from '@/components/Logo';
 type Profile = { id: string; email: string; phone: string | null; full_name: string | null; role: string; is_approved: boolean; created_at: string; };
 type ApiKey = { id: number; label: string; is_active: boolean; quota_exhausted: boolean; created_at: string; };
 type QuotaInfo = { total_searches_left: number; plan_name: string; this_month_usage: number; } | null;
+type ActivationRequest = { id: string; type: string; amount: number; credits: number; status: string; midtrans_payment_type: string | null; created_at: string; user: { email: string; full_name: string | null } };
 
 export default function AdminPage() {
   const router = useRouter();
   const supabase = createClient();
-  const [tab, setTab] = useState<'users' | 'apikeys'>('users');
+  const [tab, setTab] = useState<'users' | 'apikeys' | 'activation'>('users');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<Profile[]>([]);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [activationRequests, setActivationRequests] = useState<ActivationRequest[]>([]);
   const [quotaInfo, setQuotaInfo] = useState<QuotaInfo>(null);
   const [newKeyValue, setNewKeyValue] = useState('');
   const [newKeyLabel, setNewKeyLabel] = useState('');
@@ -31,6 +33,7 @@ export default function AdminPage() {
       setCurrentUser(user);
       loadUsers();
       loadApiKeys();
+      loadActivationRequests();
     });
   }, []);
 
@@ -43,6 +46,11 @@ export default function AdminPage() {
   const loadApiKeys = async () => {
     const res = await fetch('/next-api/admin/apikey');
     if (res.ok) { const d = await res.json(); setApiKeys(d.keys); setQuotaInfo(d.quotaInfo); }
+  };
+
+  const loadActivationRequests = async () => {
+    const res = await fetch('/next-api/admin/activation-requests');
+    if (res.ok) { const d = await res.json(); setActivationRequests(d); }
   };
 
   const updateUser = async (userId: string, updates: any) => {
@@ -152,6 +160,9 @@ export default function AdminPage() {
           </a>
           <a className={`tab tab-lg font-bold ${tab === 'apikeys' ? 'tab-active !border-primary text-primary' : 'text-base-content/60'}`} onClick={() => setTab('apikeys')}>
             🔑 API Keys
+          </a>
+          <a className={`tab tab-lg font-bold ${tab === 'activation' ? 'tab-active !border-primary text-primary' : 'text-base-content/60'}`} onClick={() => setTab('activation')}>
+            💳 Transaksi
           </a>
         </div>
 
@@ -292,6 +303,56 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ACTIVATION REQUESTS TAB */}
+        {tab === 'activation' && (
+          <div className="card bg-base-100 shadow-sm border border-base-200">
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <thead className="bg-base-200 text-base-content">
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>User</th>
+                    <th>Tipe</th>
+                    <th>Nominal / Credits</th>
+                    <th>Metode</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={6} className="text-center py-8 text-base-content/50">Memuat...</td></tr>
+                  ) : activationRequests.length === 0 ? (
+                    <tr><td colSpan={6} className="text-center py-8 text-base-content/50">Tidak ada data transaksi</td></tr>
+                  ) : activationRequests.map(req => (
+                    <tr key={req.id} className="hover">
+                      <td className="text-xs text-base-content/70">{new Date(req.created_at).toLocaleString('id-ID')}</td>
+                      <td>
+                        <div className="font-bold text-base-content">{req.user?.full_name || '—'}</div>
+                        <div className="text-xs text-base-content/60">{req.user?.email}</div>
+                      </td>
+                      <td>
+                        <span className={`badge ${req.type === 'activation' ? 'badge-primary' : 'badge-warning'} badge-sm font-bold`}>
+                          {req.type === 'activation' ? 'AKTIVASI' : 'TOP UP'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="font-semibold">Rp {req.amount.toLocaleString('id-ID')}</div>
+                        <div className="text-xs text-success font-bold">+{req.credits} credits</div>
+                      </td>
+                      <td className="text-sm">{req.midtrans_payment_type || '—'}</td>
+                      <td>
+                        <span className={`badge ${req.status === 'paid' ? 'badge-success' : req.status === 'pending' ? 'badge-warning' : 'badge-error'} font-semibold`}>
+                          {req.status.toUpperCase()}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

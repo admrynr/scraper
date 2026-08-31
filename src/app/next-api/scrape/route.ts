@@ -20,7 +20,7 @@ interface PlaceResult {
 
 async function fetchSerpPage(url: string): Promise<any> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 7500); // 7.5s per request
+  const timeoutId = setTimeout(() => controller.abort(), 7500);
   try {
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timeoutId);
@@ -36,6 +36,12 @@ async function fetchSerpPage(url: string): Promise<any> {
   }
 }
 
+// Credit tiers: 1 SerpAPI fetch (max 100 rows) = 1 credit
+// Free user: tidak pakai credit, pakai scrape_count_today (max 5/hari), max 20 rows
+const FREE_DAILY_SCRAPE_LIMIT = 5;
+const FREE_MAX_ROWS = 20;
+const ROWS_PER_CREDIT = 100; // 1 credit per 100 rows fetched
+
 export async function POST(request: NextRequest) {
   // 1. Auth check
   const supabase = await createClient();
@@ -46,10 +52,10 @@ export async function POST(request: NextRequest) {
 
   const adminClient = createAdminClient();
 
-  // 2. Check user is approved & process credits
+  // 2. Get user profile
   const { data: profile } = await adminClient
     .from('profiles')
-    .select('is_approved, role, daily_credits, purchased_credits, last_reset_date')
+    .select('is_approved, role, is_activated, purchased_credits, scrape_count_today, scrape_last_date')
     .eq('id', user.id)
     .single();
 
@@ -60,40 +66,74 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Credit System Logic
-  const today = new Date().toISOString().split('T')[0];
-  let dailyCredits = profile?.daily_credits ?? 10;
-  const purchasedCredits = profile?.purchased_credits ?? 0;
-  
-  // Reset daily credits if it's a new day
-  if (profile?.last_reset_date !== today) {
-    dailyCredits = 10;
-    await adminClient
-      .from('profiles')
-      .update({ daily_credits: 10, last_reset_date: today })
-      .eq('id', user.id);
-  }
-
   const isSuperAdmin = profile?.role === 'super_admin';
-  const hasCredits = (dailyCredits + purchasedCredits) > 0;
+  const isActivated = profile?.is_activated === true;
+  const today = new Date().toISOString().split('T')[0];
 
-  if (!isSuperAdmin && !hasCredits) {
-    return NextResponse.json(
-      { error: 'Kredit harian scraping Anda habis (0). Silakan tunggu besok atau beli kredit tambahan.' },
-      { status: 402 } // 402 Payment Required
-    );
+  // 3. Parse request body — get maxRows from frontend
+  const body = await request.json();
+  const { keyword, city, district = '', village = '', province = '', maxRows: requestedMaxRows = 20 } = body;
+
+  if (!keyword || !city) {
+    return NextResponse.json({ error: 'Keyword dan kota wajib diisi.' }, { status: 400 });
   }
 
-  // Deduct 1 credit before scraping
+  // 4. Enforce free user restrictions
+  let effectiveMaxRows = requestedMaxRows;
+
   if (!isSuperAdmin) {
-    if (dailyCredits > 0) {
-      await adminClient.from('profiles').update({ daily_credits: dailyCredits - 1 }).eq('id', user.id);
-    } else if (purchasedCredits > 0) {
-      await adminClient.from('profiles').update({ purchased_credits: purchasedCredits - 1 }).eq('id', user.id);
+    if (!isActivated) {
+      // Free user: max 20 rows, max 5 scrapes/day
+      effectiveMaxRows = FREE_MAX_ROWS;
+
+      // Reset daily count if new day
+      let scrapeCountToday = profile?.scrape_count_today ?? 0;
+      if (profile?.scrape_last_date !== today) {
+        scrapeCountToday = 0;
+        await adminClient.from('profiles')
+          .update({ scrape_count_today: 0, scrape_last_date: today })
+          .eq('id', user.id);
+      }
+
+      if (scrapeCountToday >= FREE_DAILY_SCRAPE_LIMIT) {
+        return NextResponse.json(
+          {
+            error: `Batas scraping gratis hari ini sudah tercapai (${FREE_DAILY_SCRAPE_LIMIT}x/hari). Aktivasi akun untuk scraping tanpa batas.`,
+            code: 'FREE_LIMIT_REACHED',
+          },
+          { status: 402 }
+        );
+      }
+
+      // Increment free scrape count
+      await adminClient.from('profiles')
+        .update({ scrape_count_today: scrapeCountToday + 1, scrape_last_date: today })
+        .eq('id', user.id);
+
+    } else {
+      // Activated user: check if they have enough credits
+      // Credits needed = ceil(maxRows / ROWS_PER_CREDIT)
+      const creditsNeeded = Math.ceil(effectiveMaxRows / ROWS_PER_CREDIT);
+      const purchasedCredits = profile?.purchased_credits ?? 0;
+
+      if (purchasedCredits < creditsNeeded) {
+        return NextResponse.json(
+          {
+            error: `Kredit tidak cukup. Dibutuhkan ${creditsNeeded} credit untuk ${effectiveMaxRows} rows. Saldo Anda: ${purchasedCredits} credit.`,
+            code: 'INSUFFICIENT_CREDITS',
+          },
+          { status: 402 }
+        );
+      }
+
+      // Deduct credits upfront
+      await adminClient.from('profiles')
+        .update({ purchased_credits: purchasedCredits - creditsNeeded })
+        .eq('id', user.id);
     }
   }
 
-  // 3. Get active API key from DB
+  // 5. Get active API key from DB
   const { data: activeKey } = await adminClient
     .from('serp_api_keys')
     .select('id, api_key, quota_exhausted')
@@ -114,14 +154,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 4. Parse request body
-  const body = await request.json();
-  const { keyword, city, district = '', village = '', province = '' } = body;
-
-  if (!keyword || !city) {
-    return NextResponse.json({ error: 'Keyword dan kota wajib diisi.' }, { status: 400 });
-  }
-
+  // 6. Build location string
   const locationParts: string[] = [];
   if (village) locationParts.push(village);
   if (district) locationParts.push(district);
@@ -134,15 +167,18 @@ export async function POST(request: NextRequest) {
   const seenPlaces = new Set<string>();
   let quotaExhausted = false;
   let partialReturn = false;
-  const MAX_PAGES = 2; // Cap at 2 pages per keyword (40 results) to stay within 10s
+
+  // Each SerpAPI page returns up to 20 results, max 100 per "start" range
+  // We paginate until we reach effectiveMaxRows
+  const maxPages = Math.ceil(effectiveMaxRows / 20); // SerpAPI returns ~20 per page
 
   for (const kw of keywordsList) {
-    if (partialReturn) break;
+    if (partialReturn || data.length >= effectiveMaxRows) break;
     const searchQuery = `${kw} di ${locationStr}`;
     let start = 0;
     let page = 0;
 
-    while (page < MAX_PAGES) {
+    while (page < maxPages && data.length < effectiveMaxRows) {
       const url = new URL('https://serpapi.com/search.json');
       url.searchParams.set('engine', 'google_maps');
       url.searchParams.set('q', searchQuery);
@@ -156,9 +192,8 @@ export async function POST(request: NextRequest) {
       } catch (err: any) {
         if (err.message === 'TIMEOUT') {
           partialReturn = true;
-          break; // Return what we have so far
+          break;
         }
-        // Check for quota exhaustion
         const msg = err.message || '';
         if (
           msg.includes('out of searches') ||
@@ -167,7 +202,6 @@ export async function POST(request: NextRequest) {
           msg.includes('limit reached')
         ) {
           quotaExhausted = true;
-          // Flag in DB for admin notification
           await adminClient
             .from('serp_api_keys')
             .update({ quota_exhausted: true })
@@ -198,6 +232,8 @@ export async function POST(request: NextRequest) {
       if (places.length === 0) break;
 
       for (const place of places) {
+        if (data.length >= effectiveMaxRows) break;
+        // Deduplicate by place_id or name+address combo
         const uniqueId = place.place_id || `${place.title}_${place.address}`;
         if (seenPlaces.has(uniqueId)) continue;
         seenPlaces.add(uniqueId);
@@ -223,10 +259,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Return results with optional warnings
-  const response: any = data;
   const headers: Record<string, string> = {};
   if (partialReturn) headers['X-Partial-Results'] = 'true';
   if (quotaExhausted) headers['X-Quota-Exhausted'] = 'true';
+  headers['X-Is-Free-User'] = (!isSuperAdmin && !isActivated).toString();
+  headers['X-Rows-Fetched'] = String(data.length);
 
-  return NextResponse.json(response, { headers });
+  return NextResponse.json(data, { headers });
 }

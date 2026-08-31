@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/Logo';
+import UpgradeModal from '@/components/UpgradeModal';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' } | null;
 
@@ -37,6 +38,23 @@ export default function DashboardPage() {
   const [filterPhone, setFilterPhone] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [showExportMenu, setShowExportMenu] = useState<null | 'all' | 'selected'>(null);
+  
+  const [maxRows, setMaxRows] = useState(20);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<'export' | 'whatsapp' | 'max_rows' | 'scrape_limit' | 'topup'>('scrape_limit');
+
+  const isSuperAdmin = profile?.role === 'super_admin';
+  const isActivated = profile?.is_activated === true;
+  const isFreeUser = !isSuperAdmin && !isActivated;
+
+  const handlePremiumAction = (feature: 'export' | 'whatsapp' | 'max_rows' | 'scrape_limit' | 'topup', action: () => void) => {
+    if (isFreeUser) {
+      setUpgradeFeature(feature);
+      setShowUpgradeModal(true);
+    } else {
+      action();
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -85,9 +103,20 @@ export default function DashboardPage() {
       const res = await fetch('/next-api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, city: cityName, district: districtName, village: villageName, province: provinceName }),
+        body: JSON.stringify({ keyword, city: cityName, district: districtName, village: villageName, province: provinceName, maxRows }),
       });
       const data = await res.json();
+      
+      if (res.status === 402) {
+        if (data.code === 'FREE_LIMIT_REACHED') {
+          setUpgradeFeature('scrape_limit');
+        } else if (data.code === 'INSUFFICIENT_CREDITS') {
+          setUpgradeFeature('topup');
+        }
+        setShowUpgradeModal(true);
+        throw new Error(data.error);
+      }
+      
       if (!res.ok) throw new Error(data.error || 'Terjadi kesalahan');
       if (res.headers.get('X-Partial-Results') === 'true') setPartialResults(true);
       if (res.headers.get('X-Quota-Exhausted') === 'true') setError('⚠️ Kuota SerpAPI habis. Admin sedang dihubungi untuk mengganti API key.');
@@ -182,21 +211,33 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-base-200 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
       <div className="w-full max-w-4xl card bg-base-100 shadow-sm border border-base-200 overflow-visible mb-6">
-        <div className="bg-base-100 border-b border-base-300 px-6 py-4 flex justify-between items-center rounded-t-box">
-          <div className="flex items-center gap-3">
+        <div className="bg-base-100 border-b border-base-300 px-6 py-4 flex flex-col md:flex-row justify-between items-center rounded-t-box gap-4">
+          <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start">
             <Logo href="/dashboard" size="lg" />
             <span className="badge badge-primary text-xs font-bold uppercase tracking-wider">CRM</span>
           </div>
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex flex-wrap items-center justify-center gap-3 w-full md:w-auto">
             {profile && (
-              <div className="bg-primary/10 px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/20 flex flex-col items-end text-base-content">
-                <span>Credits: <strong className="text-sm font-bold text-primary">{totalCredits}</strong></span>
+              <div className="flex items-center gap-2">
+                <div className={`badge ${isActivated || isSuperAdmin ? 'badge-success' : 'badge-warning'} font-bold`}>
+                  {isActivated || isSuperAdmin ? 'AKTIF' : 'FREE'}
+                </div>
+                <div className="bg-base-200 px-3 py-1.5 rounded-lg text-xs font-medium flex flex-col items-center sm:items-end text-base-content border border-base-300">
+                  {isFreeUser ? (
+                    <span>Scrape: <strong className="text-sm font-bold">{Math.max(0, 5 - (profile.scrape_count_today || 0))}</strong>/5</span>
+                  ) : (
+                    <span>Credits: <strong className="text-sm font-bold text-primary">{totalCredits}</strong></span>
+                  )}
+                </div>
+                {isFreeUser && (
+                  <button onClick={() => { setUpgradeFeature('scrape_limit'); setShowUpgradeModal(true); }} className="btn btn-xs btn-primary font-bold">Upgrade</button>
+                )}
               </div>
             )}
             {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
               <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost border border-base-300">⚙️ Admin</button>
             )}
-            <div className="text-right">
+            <div className="text-center sm:text-right w-full sm:w-auto mt-2 sm:mt-0">
               <p className="text-base-content/80 text-xs font-semibold">{profile?.full_name || profile?.email}</p>
               <button onClick={logout} className="text-base-content/50 text-xs hover:text-error transition underline">Logout</button>
             </div>
@@ -243,9 +284,38 @@ export default function DashboardPage() {
                 </select>
               </div>
             </div>
-            <button type="submit" disabled={loading} className="btn btn-primary w-full mt-2">
-              {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Mulai Scrape'}
-            </button>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="form-control w-full">
+                <label className="label py-1"><span className="label-text font-semibold">Max Rows *</span></label>
+                <select 
+                  value={maxRows} 
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    if (isFreeUser && val > 20) {
+                      setUpgradeFeature('max_rows');
+                      setShowUpgradeModal(true);
+                      setMaxRows(20);
+                    } else {
+                      setMaxRows(val);
+                    }
+                  }} 
+                  className={selStyle} 
+                  required
+                >
+                  <option value={20}>20 Baris (1 Halaman)</option>
+                  <option value={40}>40 Baris (2 Halaman)</option>
+                  <option value={60}>60 Baris (3 Halaman)</option>
+                  <option value={80}>80 Baris (4 Halaman)</option>
+                  <option value={100}>100 Baris (1 Credit)</option>
+                  <option value={200}>200 Baris (2 Credits)</option>
+                  <option value={500}>500 Baris (5 Credits)</option>
+                  <option value={1000}>1000 Baris (10 Credits)</option>
+                </select>
+              </div>
+              <button type="submit" disabled={loading} className="btn btn-primary w-full mt-7">
+                {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Mulai Scrape'}
+              </button>
+            </div>
           </form>
 
           {partialResults && !error && (
@@ -285,8 +355,8 @@ export default function DashboardPage() {
                 <button onClick={() => setShowExportMenu(p => p === 'all' ? null : 'all')} className="btn btn-sm btn-success text-white">Export Semua ({processedResults.length}) ▾</button>
                 {showExportMenu === 'all' && (
                   <ul className="menu bg-base-100 border border-base-200 rounded-box shadow-md absolute right-0 mt-1 w-40 z-10 p-1">
-                    <li><a onClick={() => { exportExcel(processedResults); setShowExportMenu(null); }}>📊 Excel (.xlsx)</a></li>
-                    <li><a onClick={() => { exportCSV(processedResults); setShowExportMenu(null); }}>📄 CSV (.csv)</a></li>
+                    <li><a onClick={() => handlePremiumAction('export', () => { exportExcel(processedResults); setShowExportMenu(null); })}>📊 Excel (.xlsx)</a></li>
+                    <li><a onClick={() => handlePremiumAction('export', () => { exportCSV(processedResults); setShowExportMenu(null); })}>📄 CSV (.csv)</a></li>
                   </ul>
                 )}
               </div>
@@ -294,8 +364,8 @@ export default function DashboardPage() {
                 <button onClick={() => setShowExportMenu(p => p === 'selected' ? null : 'selected')} disabled={selectedIndices.size === 0} className="btn btn-sm btn-primary">Export Dipilih ({selectedIndices.size}) ▾</button>
                 {showExportMenu === 'selected' && selectedIndices.size > 0 && (
                   <ul className="menu bg-base-100 border border-base-200 rounded-box shadow-md absolute right-0 mt-1 w-40 z-10 p-1">
-                    <li><a onClick={() => { exportExcel(selectedData); setShowExportMenu(null); }}>📊 Excel (.xlsx)</a></li>
-                    <li><a onClick={() => { exportCSV(selectedData); setShowExportMenu(null); }}>📄 CSV (.csv)</a></li>
+                    <li><a onClick={() => handlePremiumAction('export', () => { exportExcel(selectedData); setShowExportMenu(null); })}>📊 Excel (.xlsx)</a></li>
+                    <li><a onClick={() => handlePremiumAction('export', () => { exportCSV(selectedData); setShowExportMenu(null); })}>📄 CSV (.csv)</a></li>
                   </ul>
                 )}
               </div>
@@ -341,9 +411,9 @@ export default function DashboardPage() {
                       <td><div className="text-sm text-base-content/70 max-w-xs truncate" title={item.address}>{item.address}</div></td>
                       <td className="whitespace-nowrap text-center" onClick={e => e.stopPropagation()}>
                         {item.phone ? (
-                          <a href={formatWA(item.phone, item.name)} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-success text-white">
+                          <button onClick={() => handlePremiumAction('whatsapp', () => window.open(formatWA(item.phone, item.name), '_blank'))} className="btn btn-xs btn-success text-white">
                             Chat WA ({item.phone})
-                          </a>
+                          </button>
                         ) : <span className="text-xs text-base-content/40">No Phone</span>}
                       </td>
                     </tr>
@@ -365,6 +435,13 @@ export default function DashboardPage() {
           )}
         </div>
       )}
+
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+        feature={upgradeFeature} 
+        isActivated={isActivated}
+      />
     </div>
   );
 }

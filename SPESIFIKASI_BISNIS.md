@@ -19,13 +19,19 @@ Aplikasi ini mengotomatiskan pencarian data profil bisnis (nama, rating, alamat,
 
 ### 3.1. Sistem Autentikasi & Multi-Level Role (Keanggotaan)
 Aplikasi memiliki sistem akses yang aman dan tertutup. Setiap pengguna wajib mendaftar dan memverifikasi identitasnya.
-*   **Role User (Pengguna Biasa):** 
+*   **Role User (Free):** 
     *   Mendaftar menggunakan Email & Password.
-    *   Wajib memverifikasi kepemilikan email melalui link verifikasi OTP/PKCE (menggunakan SMTP kustom via Brevo).
-    *   Hanya dapat menggunakan fitur *scraping* dan mengelola hasil pencariannya sendiri.
+    *   Wajib memverifikasi kepemilikan email melalui link verifikasi OTP/PKCE.
+    *   Mendapat batas scraping gratis 5x per hari (maksimal 20 baris data per scrape).
+    *   Fitur Chat WhatsApp dan Export Data terkunci (membutuhkan aktivasi).
+*   **Role User (Premium / Activated):**
+    *   Pengguna yang telah membayar aktivasi satu kali (Rp 50.000) via Midtrans.
+    *   Mendapatkan bonus awal 50 *credits*.
+    *   Akses semua fitur terbuka (Export, Chat WhatsApp, pilihan *Max Rows* hingga 1000 baris).
+    *   Bisa melakukan *top-up credit* (Rp 50.000 = 70 *credits*). 1 *credit* = ekstraksi 100 baris data.
 *   **Role Admin:**
     *   Memiliki akses ke halaman **Admin Panel**.
-    *   Dapat mengelola pengguna (melihat daftar pendaftar, men-suspend akun).
+    *   Dapat mengelola pengguna dan memantau riwayat transaksi pembayaran.
     *   Dapat mengelola API Key SerpAPI (menambah kunci baru, mengaktifkan, dan melihat status kuota).
 *   **Role Super Admin:**
     *   Otomatis ditetapkan berdasarkan konfigurasi *environment variables*.
@@ -63,6 +69,6 @@ Aplikasi dibangun menggunakan teknologi modern yang memastikan performa tinggi d
 ---
 
 ## 5. Pengembangan Lanjutan (Future Roadmap)
-*   **Manajemen Lisensi / Paket Berlangganan (Billing):** Integrasi *payment gateway* (Misal: Midtrans/Xendit) untuk membatasi kuota scraping per pengguna per bulan.
+*   ~~**Manajemen Lisensi / Paket Berlangganan (Billing):** Integrasi *payment gateway* (Midtrans) untuk monetisasi berbasis *credits* dan fitur premium.~~ *(Selesai)*
 *   **Cloud CRM Storage:** Mengizinkan pengguna untuk menyimpan "Daftar Prospek" ke database Supabase agar tidak hilang saat berganti perangkat (saat ini masih di Local Storage browser).
 *   **AI Auto-Outreach:** Integrasi dengan OpenAI untuk mempersonalisasi *template* pesan penawaran berdasarkan nama dan kategori bisnis yang sedang diekstraksi.

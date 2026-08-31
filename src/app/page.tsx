@@ -38,7 +38,7 @@ export default async function Home() {
         <section className="pt-24 pb-16 px-4 text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-6">
             <span>🎁</span>
-            <span>Gratis 10x scrape per hari — tanpa kartu kredit</span>
+            <span>Gratis 5x scrape per hari — tanpa kartu kredit</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-extrabold text-base-content leading-tight mb-6 tracking-tight">
             Temukan Ratusan Prospek Bisnis Lokal dalam Hitungan Detik
@@ -245,7 +245,7 @@ export default async function Home() {
                 Apakah Prospekto benar-benar gratis?
               </div>
               <div className="collapse-content text-base-content/70"> 
-                <p>Ya. Setiap user mendapatkan kuota 10x scrape per hari tanpa biaya dan tanpa kartu kredit. Kuota akan reset setiap hari.</p>
+                <p>Ya. Setiap user mendapatkan kuota 5x scrape per hari (maksimal 20 baris data per pencarian) tanpa biaya dan tanpa kartu kredit. Untuk scrape tanpa batas, export ke Excel, dan Chat WA, Anda bisa melakukan aktivasi akun Premium cukup dengan Rp 50.000 (sekali bayar, dapat bonus *credits*).</p>
               </div>
             </div>
 
@@ -337,7 +337,7 @@ export default async function Home() {
             <ul className="space-y-3 text-sm text-base-content/70">
               <li><Link href="#" className="hover:text-primary transition-colors">Fitur</Link></li>
               <li><Link href="#cara-kerja" className="hover:text-primary transition-colors">Cara Kerja</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Harga (Segera)</Link></li>
+              <li><Link href="/upgrade" className="hover:text-primary transition-colors">Harga & Premium</Link></li>
             </ul>
           </div>
           <div>
