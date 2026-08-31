@@ -35,7 +35,7 @@ export default function UpgradeSuccessPage() {
     <div className="min-h-screen bg-gradient-to-br from-base-200 to-primary/10 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md text-center">
         <div className="mb-6">
-          <Logo href="/dashboard" size="xl" />
+          <Logo href="/dashboard" size="lg" />
         </div>
         
         {status === 'checking' && (
