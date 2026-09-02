@@ -52,6 +52,14 @@
   
   --background: var(--base-200);
   --foreground: var(--base-content);
+
+  /* iOS / Mobile Safari Fallbacks: Force Tailwind v4 mapped variables */
+  --color-base-100: #1f2937 !important;
+  --color-base-200: #111827 !important;
+  --color-base-300: #374151 !important;
+  --color-base-content: #f9fafb !important;
+  --color-neutral: #374151 !important;
+  --color-neutral-content: #f9fafb !important;
 }
 
 body {
@@ -63,8 +71,18 @@ body {
 
 /* Fix mobile browser overriding text color on inputs in dark mode */
 input, textarea, select {
-  color: inherit;
-  background-color: inherit;
+  color: var(--base-content) !important;
+  background-color: transparent;
+}
+[data-theme="dark"] input, 
+[data-theme="dark"] textarea, 
+[data-theme="dark"] select {
+  color: #f9fafb !important;
+}
+
+/* Ensure text elements always respect dark mode on mobile */
+[data-theme="dark"] body {
+  color: #f9fafb !important;
 }
 
 /* Logo Theme Variant Rules */

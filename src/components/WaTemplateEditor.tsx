@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 
 // All available variables from the scrape result + their friendly labels
 export const ALL_VARIABLES = [
@@ -79,6 +80,7 @@ export default function WaTemplateEditor({ isOpen, onClose, template, onSave, sa
 
   const handleSave = () => {
     onSave(draft);
+    toast.success('Template WhatsApp berhasil disimpan');
     onClose();
   };
 

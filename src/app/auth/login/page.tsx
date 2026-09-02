@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 import Logo from '@/components/Logo';
 
 export default function LoginPage() {
@@ -74,6 +75,8 @@ export default function LoginPage() {
     // if user reaches here, their email is verified (or they are superadmin)
     // No need to check isApproved anymore, as email verification is sufficient!
 
+    toast.success('Login berhasil!');
+
     if (isSuperAdmin || role === 'admin') {
       router.push('/admin');
     } else {
@@ -89,7 +92,13 @@ export default function LoginPage() {
       body: JSON.stringify({ email: unverifiedEmail }),
     });
     const data = await res.json();
-    setResendMsg(res.ok ? 'Email verifikasi telah dikirim ulang! Periksa kotak masuk Anda.' : data.error || 'Gagal mengirim ulang.');
+    if (res.ok) {
+      setResendMsg('Email verifikasi telah dikirim ulang! Periksa kotak masuk Anda.');
+      toast.success('Email verifikasi terkirim');
+    } else {
+      setResendMsg(data.error || 'Gagal mengirim ulang.');
+      toast.error(data.error || 'Gagal mengirim ulang email');
+    }
     setResendLoading(false);
   };
 

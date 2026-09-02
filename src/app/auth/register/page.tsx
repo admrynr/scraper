@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
+import toast from 'react-hot-toast';
 
 type FieldStatus = 'idle' | 'checking' | 'ok' | 'error';
 
@@ -49,10 +50,12 @@ export default function RegisterPage() {
     const data = await res.json();
     if (!res.ok) {
       setError(data.error || 'Terjadi kesalahan.');
+      toast.error(data.error || 'Gagal mendaftar.');
     } else {
       setSuccess(true);
       setIsSuperAdmin(data.isSuperAdmin);
       setRequiresVerification(data.requiresVerification);
+      toast.success(data.isSuperAdmin ? 'Akun Super Admin berhasil dibuat!' : 'Berhasil mendaftar! Cek email Anda.');
     }
     setLoading(false);
   };
@@ -65,7 +68,13 @@ export default function RegisterPage() {
       body: JSON.stringify({ email }),
     });
     const data = await res.json();
-    setResendMsg(res.ok ? 'Email verifikasi telah dikirim ulang! Periksa kotak masuk Anda.' : data.error || 'Gagal mengirim ulang.');
+    if (res.ok) {
+      setResendMsg('Email verifikasi telah dikirim ulang! Periksa kotak masuk Anda.');
+      toast.success('Email verifikasi terkirim');
+    } else {
+      setResendMsg(data.error || 'Gagal mengirim ulang.');
+      toast.error(data.error || 'Gagal mengirim ulang email');
+    }
     setResendLoading(false);
   };
 

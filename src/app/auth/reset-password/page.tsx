@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -62,8 +63,10 @@ function ResetPasswordForm() {
 
     if (updateError) {
       setError(updateError.message);
+      toast.error('Gagal mereset password');
     } else {
       setSuccess(true);
+      toast.success('Password berhasil diubah!');
       // Sign out so user logs in fresh with new password
       await supabase.auth.signOut();
       setTimeout(() => router.push('/auth/login'), 2500);

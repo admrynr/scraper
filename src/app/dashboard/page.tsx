@@ -8,6 +8,7 @@ import Logo from '@/components/Logo';
 import ThemeToggle from '@/components/ThemeToggle';
 import UpgradeModal from '@/components/UpgradeModal';
 import WaTemplateEditor, { ALL_VARIABLES } from '@/components/WaTemplateEditor';
+import toast from 'react-hot-toast';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' } | null;
 
@@ -138,7 +139,13 @@ export default function DashboardPage() {
           return { ...prev, daily_credits: dc, purchased_credits: pc, last_reset_date: today };
         });
       }
-    } catch (err: any) { setError(err.message); } finally { setLoading(false); }
+      toast.success('Scraping selesai!');
+    } catch (err: any) { 
+      setError(err.message); 
+      toast.error(err.message);
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const processedResults = useMemo(() => {
@@ -182,6 +189,7 @@ export default function DashboardPage() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Leads');
     XLSX.writeFile(wb, buildFilename('.xlsx'));
+    toast.success('Data berhasil diekspor ke Excel');
   };
 
   const exportCSV = (data: any[]) => {
@@ -190,6 +198,7 @@ export default function DashboardPage() {
     const rows = [headers.join(','), ...data.map(r => headers.map(h => { const v = r[h] != null ? String(r[h]) : ''; return v.includes(',') || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v; }).join(','))];
     const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildFilename('.csv'); a.click();
+    toast.success('Data berhasil diekspor ke CSV');
   };
 
   const formatWA = (item: Record<string, any>) => {

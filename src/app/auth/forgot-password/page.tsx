@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 
 export default function ForgotPasswordPage() {
   const supabase = createClient();
@@ -22,8 +23,10 @@ export default function ForgotPasswordPage() {
 
     if (resetError) {
       setError(resetError.message);
+      toast.error('Gagal mengirim link reset password');
     } else {
       setSent(true);
+      toast.success('Link reset password terkirim');
     }
     setLoading(false);
   };

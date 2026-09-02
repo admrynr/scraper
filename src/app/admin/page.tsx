@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/Logo';
+import toast from 'react-hot-toast';
 
 type Profile = { id: string; email: string; phone: string | null; full_name: string | null; role: string; is_approved: boolean; created_at: string; };
 type ApiKey = { id: number; label: string; is_active: boolean; quota_exhausted: boolean; created_at: string; };
@@ -22,10 +23,7 @@ export default function AdminPage() {
   const [newKeyLabel, setNewKeyLabel] = useState('');
   const [newKeyActive, setNewKeyActive] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('all');
-
-  const notify = (type: 'ok' | 'err', text: string) => { setMsg({ type, text }); setTimeout(() => setMsg(null), 3500); };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -55,31 +53,31 @@ export default function AdminPage() {
 
   const updateUser = async (userId: string, updates: any) => {
     const res = await fetch('/next-api/admin/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, updates }) });
-    if (res.ok) { notify('ok', 'Berhasil diupdate!'); loadUsers(); } else { notify('err', 'Gagal update.'); }
+    if (res.ok) { toast.success('Berhasil diupdate!'); loadUsers(); } else { toast.error('Gagal update.'); }
   };
 
   const deleteUser = async (userId: string, email: string) => {
     if (!confirm(`Hapus user ${email}?`)) return;
     const res = await fetch(`/next-api/admin/users?userId=${userId}`, { method: 'DELETE' });
-    if (res.ok) { notify('ok', 'User dihapus.'); loadUsers(); } else { notify('err', 'Gagal hapus.'); }
+    if (res.ok) { toast.success('User dihapus.'); loadUsers(); } else { toast.error('Gagal hapus.'); }
   };
 
   const addApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyValue.trim()) return;
     const res = await fetch('/next-api/admin/apikey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: newKeyValue, label: newKeyLabel || 'Key Baru', set_active: newKeyActive }) });
-    if (res.ok) { notify('ok', 'API key berhasil ditambahkan!'); setNewKeyValue(''); setNewKeyLabel(''); setNewKeyActive(false); loadApiKeys(); } else { notify('err', 'Gagal menambahkan key.'); }
+    if (res.ok) { toast.success('API key berhasil ditambahkan!'); setNewKeyValue(''); setNewKeyLabel(''); setNewKeyActive(false); loadApiKeys(); } else { toast.error('Gagal menambahkan key.'); }
   };
 
   const setActiveKey = async (id: number) => {
     const res = await fetch('/next-api/admin/apikey', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-    if (res.ok) { notify('ok', 'API key diaktifkan!'); loadApiKeys(); } else { notify('err', 'Gagal mengaktifkan.'); }
+    if (res.ok) { toast.success('API key diaktifkan!'); loadApiKeys(); } else { toast.error('Gagal mengaktifkan.'); }
   };
 
   const deleteKey = async (id: number) => {
     if (!confirm('Hapus API key ini?')) return;
     const res = await fetch(`/next-api/admin/apikey?id=${id}`, { method: 'DELETE' });
-    if (res.ok) { notify('ok', 'Key dihapus.'); loadApiKeys(); } else { notify('err', 'Gagal hapus.'); }
+    if (res.ok) { toast.success('Key dihapus.'); loadApiKeys(); } else { toast.error('Gagal hapus.'); }
   };
 
   const logout = async () => { await supabase.auth.signOut(); router.push('/auth/login'); };
@@ -105,15 +103,6 @@ export default function AdminPage() {
           <button onClick={logout} className="btn btn-sm btn-ghost text-error">Logout</button>
         </div>
       </div>
-
-      {/* Notification */}
-      {msg && (
-        <div className="toast toast-top toast-end z-50 mt-14">
-          <div className={`alert ${msg.type === 'ok' ? 'alert-success' : 'alert-error'} shadow-lg`}>
-            <span>{msg.text}</span>
-          </div>
-        </div>
-      )}
 
       <div className="max-w-6xl mx-auto p-6">
         {/* Quota Warning */}
