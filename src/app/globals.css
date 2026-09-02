@@ -21,6 +21,7 @@
 }
 
 :root {
+  color-scheme: light;
   --primary: #FF642D;
   --primary-content: #ffffff;
   
@@ -37,6 +38,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --primary: #FF642D;
   --primary-content: #ffffff;
   
@@ -57,6 +59,12 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Fix mobile browser overriding text color on inputs in dark mode */
+input, textarea, select {
+  color: inherit;
+  background-color: inherit;
 }
 
 /* Logo Theme Variant Rules */

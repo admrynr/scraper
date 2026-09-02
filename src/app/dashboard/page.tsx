@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/Logo';
+import ThemeToggle from '@/components/ThemeToggle';
 import UpgradeModal from '@/components/UpgradeModal';
+import WaTemplateEditor, { ALL_VARIABLES } from '@/components/WaTemplateEditor';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' } | null;
 
@@ -38,7 +40,8 @@ export default function DashboardPage() {
   const [filterPhone, setFilterPhone] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [showExportMenu, setShowExportMenu] = useState<null | 'all' | 'selected'>(null);
-  
+  const [showWaEditor, setShowWaEditor] = useState(false);
+
   const [maxRows, setMaxRows] = useState(20);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<'export' | 'whatsapp' | 'max_rows' | 'scrape_limit' | 'topup'>('scrape_limit');
@@ -189,11 +192,16 @@ export default function DashboardPage() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = buildFilename('.csv'); a.click();
   };
 
-  const formatWA = (phone: string, name: string) => {
-    let p = phone.replace(/[\s\-\+]/g, '');
+  const formatWA = (item: Record<string, any>) => {
+    let p = (item.phone || '').replace(/[\s\-\+]/g, '');
     if (p.startsWith('0')) p = '62' + p.slice(1);
     else if (p.startsWith('8')) p = '62' + p;
-    return `https://wa.me/${p}?text=${encodeURIComponent(waTemplate.replace(/{name}/g, name))}`;
+    // Replace ALL variables in the template
+    const msg = ALL_VARIABLES.reduce((txt, v) => {
+      const val = item[v.key] ?? '';
+      return txt.replace(new RegExp(`\\{${v.key}\\}`, 'g'), String(val));
+    }, waTemplate);
+    return `https://wa.me/${p}?text=${encodeURIComponent(msg)}`;
   };
 
   const logout = async () => { await supabase.auth.signOut(); router.push('/auth/login'); };
@@ -237,6 +245,7 @@ export default function DashboardPage() {
             {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
               <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost border border-base-300">⚙️ Admin</button>
             )}
+            <ThemeToggle />
             <div className="text-center sm:text-right w-full sm:w-auto mt-2 sm:mt-0">
               <p className="text-base-content/80 text-xs font-semibold">{profile?.full_name || profile?.email}</p>
               <button onClick={logout} className="text-base-content/50 text-xs hover:text-error transition underline">Logout</button>
@@ -373,9 +382,22 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="px-6 py-4 border-b border-base-200 bg-base-200/30">
-            <label className="label py-1"><span className="label-text font-semibold">Template WhatsApp (Gunakan {'{name}'} untuk nama dinamis)</span></label>
-            <textarea value={waTemplate} onChange={e => setWaTemplate(e.target.value)} className="textarea textarea-bordered w-full leading-relaxed" rows={2} />
+          <div className="px-6 py-4 border-b border-base-200 bg-base-200/30 flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-base-content/60 uppercase tracking-wider mb-1">💬 Template WhatsApp</p>
+              <p className="text-sm text-base-content/70 font-mono truncate bg-base-200 rounded-lg px-3 py-2 border border-base-300" title={waTemplate}>
+                {waTemplate || <span className="italic opacity-50">Belum ada template...</span>}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowWaEditor(true)}
+              className="btn btn-success btn-sm text-white gap-2 shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Template
+            </button>
           </div>
 
           <div className="overflow-x-auto">
@@ -411,7 +433,7 @@ export default function DashboardPage() {
                       <td><div className="text-sm text-base-content/70 max-w-xs truncate" title={item.address}>{item.address}</div></td>
                       <td className="whitespace-nowrap text-center" onClick={e => e.stopPropagation()}>
                         {item.phone ? (
-                          <button onClick={() => handlePremiumAction('whatsapp', () => window.open(formatWA(item.phone, item.name), '_blank'))} className="btn btn-xs btn-success text-white">
+                          <button onClick={() => handlePremiumAction('whatsapp', () => window.open(formatWA(item), '_blank'))} className="btn btn-xs btn-success text-white">
                             Chat WA ({item.phone})
                           </button>
                         ) : <span className="text-xs text-base-content/40">No Phone</span>}
@@ -441,6 +463,13 @@ export default function DashboardPage() {
         onClose={() => setShowUpgradeModal(false)} 
         feature={upgradeFeature} 
         isActivated={isActivated}
+      />
+      <WaTemplateEditor
+        isOpen={showWaEditor}
+        onClose={() => setShowWaEditor(false)}
+        template={waTemplate}
+        onSave={setWaTemplate}
+        sampleData={results[0]}
       />
     </div>
   );
