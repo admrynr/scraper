@@ -95,36 +95,36 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* 2. Pain Points — derived from real features */}
+        {/* 2. Pain Points — reframed as empathy + relief */}
         <section className="py-20 bg-base-200 border-y border-base-300">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold text-base-content mb-3">Pernah frustrasi karena...</h2>
-            <p className="text-base-content/60 mb-10 text-sm">Masalah nyata yang dihadapi pelaku cold outreach & tim sales B2B setiap hari</p>
+            <h2 className="text-3xl font-bold text-base-content mb-3">Waktumu terlalu berharga untuk dihabiskan di sini</h2>
+            <p className="text-base-content/60 mb-10 text-sm">Kenali hambatan yang selama ini memperlambat tim sales & pelaku cold outreach</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
               {[
                 {
                   icon: '⏳',
-                  text: 'Berjam-jam scroll Google Maps satu per satu hanya untuk dapat 20 nomor telepon bisnis?'
+                  text: 'Scroll Google Maps berjam-jam hanya untuk mengumpulkan puluhan nomor kontak'
                 },
                 {
                   icon: '📋',
-                  text: 'Copy-paste manual nama, alamat, nomor — lalu data malah berantakan di spreadsheet yang susah di-follow-up?'
+                  text: 'Copy-paste manual yang rentan salah dan sulit di-follow-up'
                 },
                 {
                   icon: '📍',
-                  text: 'Tidak bisa menarget wilayah spesifik seperti satu kecamatan atau kelurahan tertentu untuk cold outreach yang lebih tepat sasaran?'
+                  text: 'Kesulitan menarget area spesifik — kecamatan atau kelurahan tertentu'
                 },
                 {
                   icon: '💸',
-                  text: 'Budget iklan terlalu mahal tapi tidak yakin hasilnya, padahal cold outreach WhatsApp masih jauh lebih efektif untuk bisnis lokal?'
+                  text: 'Iklan berbayar mahal, padahal cold outreach WhatsApp jauh lebih efektif'
                 },
                 {
                   icon: '🐢',
-                  text: 'Momentum closing hilang karena jarak dari "cari data" ke "kirim pesan" butuh waktu berjam-jam dan proses yang ribet?'
+                  text: 'Momentum closing hilang karena proses dari cari data ke kirim pesan terlalu panjang'
                 },
                 {
                   icon: '🗂️',
-                  text: 'Data prospek tidak bisa diekspor rapi, sehingga sulit dibagi ke tim atau dimasukkan ke CRM yang sudah ada?'
+                  text: 'Data prospek tercecer, sulit dibagi ke tim atau dimasukkan ke CRM'
                 },
               ].map((item, i) => (
                 <div key={i} className="bg-base-100 p-5 rounded-xl border border-base-300 shadow-sm flex items-start gap-4">
@@ -139,40 +139,40 @@ export default async function Home() {
         {/* 3. Solutions — features as answers */}
         <section className="py-24 px-4 max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-base-content">Prospekto Menyelesaikan Semuanya</h2>
-            <p className="text-base-content/60 mt-3 max-w-2xl mx-auto">Setiap fitur dirancang untuk memotong hambatan nyata dalam proses cold outreach B2B</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-base-content">Semua yang Kamu Butuhkan, Dalam Satu Platform</h2>
+            <p className="text-base-content/60 mt-3 max-w-2xl mx-auto">Dari pencarian data hingga follow-up — selesai dalam hitungan menit</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
                 emoji: '📍',
-                title: 'Targeting Geografis Sampai Kelurahan',
-                desc: 'Cascading dropdown Provinsi → Kota → Kecamatan → Kelurahan menggunakan data resmi wilayah Indonesia. Tidak perlu filter manual — langsung tembak pasar yang tepat.'
+                title: 'Target sampai Tingkat Kelurahan',
+                desc: 'Pilih wilayah dari Provinsi hingga Kelurahan — langsung tembak pasar yang paling relevan.'
               },
               {
                 emoji: '⚡',
-                title: 'Multi-Keyword, Ratusan Data dalam Detik',
-                desc: 'Masukkan banyak kata kunci sekaligus (contoh: "Barbershop, Cafe, Salon") — sistem otomatis mengekstrak nama, alamat, telepon, rating, dan website dari Google Maps.'
+                title: 'Ratusan Data dalam Detik',
+                desc: 'Masukkan banyak kata kunci sekaligus. Sistem ekstrak nama, telepon, alamat & rating dari Google Maps secara otomatis.'
               },
               {
                 emoji: '💬',
-                title: 'Langsung WhatsApp dengan Template Dinamis',
-                desc: 'Satu klik tombol "Chat WA" langsung membuka WhatsApp dengan nomor yang sudah diformat dan pesan yang otomatis dipersonalisasi dengan nama bisnis dan data lainnya.'
+                title: 'WhatsApp 1 Klik, Langsung Terkirim',
+                desc: 'Tombol Chat WA langsung buka WhatsApp dengan nomor terformat dan pesan yang sudah dipersonalisasi — tanpa simpan nomor dulu.'
               },
               {
                 emoji: '📊',
                 title: 'Export Excel & CSV Siap Pakai',
-                desc: 'Pilih prospek tertentu atau seluruh hasil, lalu ekspor ke Excel (.xlsx) atau CSV. Langsung bisa dimasukkan ke CRM, dibagi ke tim, atau dijadikan laporan.'
+                desc: 'Pilih sebagian atau seluruh data, lalu ekspor ke .xlsx atau CSV — siap masuk CRM atau dibagi ke tim.'
               },
               {
                 emoji: '🔍',
                 title: 'Filter & Sorting Cerdas',
-                desc: 'Saring hanya bisnis yang punya nomor telepon atau website. Urutkan berdasarkan rating atau jumlah ulasan. Fokus pada prospek berkualitas, bukan semua data.'
+                desc: 'Tampilkan hanya prospek dengan nomor telepon atau website. Urutkan berdasarkan rating untuk fokus ke yang terbaik.'
               },
               {
                 emoji: '🛡️',
-                title: 'Anti-Gagal, Data Tersimpan Otomatis',
-                desc: 'Jika koneksi terbatas, sistem tetap mengembalikan data parsial yang sudah terkumpul. Data tersimpan di browser — refresh pun tidak hilang.'
+                title: 'Data Aman, Tidak Pernah Hilang',
+                desc: 'Hasil scraping tersimpan otomatis di browser. Koneksi putus pun data tetap kembali — tidak ada yang hilang sia-sia.'
               },
             ].map((f, i) => (
               <div key={i} className="card bg-base-100 border border-base-300 hover:shadow-lg hover:border-primary/30 transition-all duration-200">
