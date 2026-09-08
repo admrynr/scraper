@@ -1,11 +1,15 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* Semrush + Notion inspired theme */
+/* Semrush + Modern SaaS Dual-Accent Theme (Semrush Orange #FF642D + Tech Indigo #4F46E5) */
 @theme {
   /* Color Overrides for Tailwind v4 */
   --color-primary: var(--primary);
   --color-primary-content: var(--primary-content);
+  --color-secondary: var(--secondary);
+  --color-secondary-content: var(--secondary-content);
+  --color-accent: var(--accent);
+  --color-accent-content: var(--accent-content);
   
   --color-base-100: var(--base-100);
   --color-base-200: var(--base-200);
@@ -15,23 +19,39 @@
   --color-neutral: var(--neutral);
   --color-neutral-content: var(--neutral-content);
 
-  /* Structural/Rounding overrides for Notion-like clean edges */
-  --radius-box: 0.375rem;
-  --radius-btn: 0.375rem;
+  --color-semrush: #FF642D;
+  --color-semrush-hover: #E5531D;
+  --color-tech-indigo: #4F46E5;
+  --color-tech-indigo-light: #6366F1;
+
+  /* Structural/Rounding overrides for clean modern SaaS edges */
+  --radius-box: 0.5rem;
+  --radius-btn: 0.5rem;
 }
 
 :root {
   color-scheme: light;
   --primary: #FF642D;
   --primary-content: #ffffff;
+  --secondary: #4F46E5;
+  --secondary-content: #ffffff;
+  --accent: #6366F1;
+  --accent-content: #ffffff;
+  
+  --color-primary: #FF642D;
+  --color-primary-content: #ffffff;
+  --color-secondary: #4F46E5;
+  --color-secondary-content: #ffffff;
+  --p: #FF642D;
+  --pc: #ffffff;
   
   --base-100: #ffffff; /* pure white for cards */
-  --base-200: #f7f7f5; /* Notion light gray canvas */
-  --base-300: #e2e8f0; /* subtle borders */
-  --base-content: #111827; /* dark slate text */
+  --base-200: #f8fafc; /* Crisp slate-50 canvas */
+  --base-300: #e2e8f0; /* subtle slate-200 borders */
+  --base-content: #0f172a; /* deep slate-900 text */
   
-  --neutral: #e2e8f0;
-  --neutral-content: #111827;
+  --neutral: #f1f5f9;
+  --neutral-content: #0f172a;
 
   --background: var(--base-200);
   --foreground: var(--base-content);
@@ -41,25 +61,59 @@
   color-scheme: dark;
   --primary: #FF642D;
   --primary-content: #ffffff;
+  --secondary: #6366F1;
+  --secondary-content: #ffffff;
+  --accent: #818CF8;
+  --accent-content: #ffffff;
   
-  --base-100: #1f2937; /* Dark slate card */
-  --base-200: #111827; /* Darker slate canvas */
-  --base-300: #374151; /* Border dark */
-  --base-content: #f9fafb; /* Light text */
+  --color-primary: #FF642D;
+  --color-primary-content: #ffffff;
+  --color-secondary: #6366F1;
+  --color-secondary-content: #ffffff;
+  --p: #FF642D;
+  --pc: #ffffff;
   
-  --neutral: #374151;
-  --neutral-content: #f9fafb;
+  --base-100: #1e293b; /* Dark slate-800 card */
+  --base-200: #0f172a; /* Darker slate-900 canvas */
+  --base-300: #334155; /* Slate-700 border */
+  --base-content: #f8fafc; /* Crisp slate-50 text */
+  
+  --neutral: #1e293b;
+  --neutral-content: #f8fafc;
   
   --background: var(--base-200);
   --foreground: var(--base-content);
 
-  /* iOS / Mobile Safari Fallbacks: Force Tailwind v4 mapped variables */
-  --color-base-100: #1f2937 !important;
-  --color-base-200: #111827 !important;
-  --color-base-300: #374151 !important;
-  --color-base-content: #f9fafb !important;
-  --color-neutral: #374151 !important;
-  --color-neutral-content: #f9fafb !important;
+  /* Force variables in dark mode */
+  --color-base-100: #1e293b !important;
+  --color-base-200: #0f172a !important;
+  --color-base-300: #334155 !important;
+  --color-base-content: #f8fafc !important;
+  --color-neutral: #1e293b !important;
+  --color-neutral-content: #f8fafc !important;
+  --color-primary: #FF642D !important;
+  --color-primary-content: #ffffff !important;
+}
+
+/* Explicit button styling for consistent dual accent */
+.btn-primary {
+  background-color: #FF642D !important;
+  border-color: #FF642D !important;
+  color: #ffffff !important;
+}
+.btn-primary:hover {
+  background-color: #E5531D !important;
+  border-color: #E5531D !important;
+}
+
+.btn-indigo {
+  background-color: #4F46E5 !important;
+  border-color: #4F46E5 !important;
+  color: #ffffff !important;
+}
+.btn-indigo:hover {
+  background-color: #4338CA !important;
+  border-color: #4338CA !important;
 }
 
 body {

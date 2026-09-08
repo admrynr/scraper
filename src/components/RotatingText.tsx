@@ -12,7 +12,11 @@ const words = [
   'Tim Marketing',
 ];
 
-export default function RotatingText() {
+interface RotatingTextProps {
+  className?: string;
+}
+
+export default function RotatingText({ className = 'text-indigo-600 dark:text-indigo-400' }: RotatingTextProps) {
   const [index, setIndex] = useState(0);
   const [subIndex, setSubIndex] = useState(0);
   const [reverse, setReverse] = useState(false);
@@ -40,7 +44,7 @@ export default function RotatingText() {
 
   return (
     <span
-      className="text-primary inline-block min-w-[160px] md:min-w-[280px] text-left"
+      className={`${className} inline-block min-w-[160px] md:min-w-[280px] text-left`}
       aria-label={words[index]}
     >
       {words[index].substring(0, subIndex)}
