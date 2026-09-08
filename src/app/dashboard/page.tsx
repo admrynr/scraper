@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/Logo';
 import ThemeToggle from '@/components/ThemeToggle';
 import UpgradeModal from '@/components/UpgradeModal';
 import WaTemplateEditor, { ALL_VARIABLES } from '@/components/WaTemplateEditor';
+import SaveToListModal from '@/components/SaveToListModal';
 import toast from 'react-hot-toast';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' } | null;
@@ -42,6 +44,7 @@ export default function DashboardPage() {
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [showExportMenu, setShowExportMenu] = useState<null | 'all' | 'selected'>(null);
   const [showWaEditor, setShowWaEditor] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   const [maxRows, setMaxRows] = useState(20);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -251,6 +254,11 @@ export default function DashboardPage() {
                 )}
               </div>
             )}
+            
+            <Link href="/dashboard/lists" className="btn btn-sm btn-ghost border border-base-300">
+              📋 Campaigns
+            </Link>
+
             {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
               <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost border border-base-300">⚙️ Admin</button>
             )}
@@ -369,6 +377,21 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
+              <button 
+                onClick={() => {
+                  if (isFreeUser) {
+                    setUpgradeFeature('export'); // re-using export upgrade prompt or create a new one 'save_list'
+                    setShowUpgradeModal(true);
+                  } else {
+                    setShowSaveModal(true);
+                  }
+                }} 
+                disabled={selectedIndices.size === 0} 
+                className="btn btn-sm btn-info text-white"
+              >
+                Simpan ke List ({selectedIndices.size})
+                {isFreeUser && <span className="ml-1">🔒</span>}
+              </button>
               <div className="relative">
                 <button onClick={() => setShowExportMenu(p => p === 'all' ? null : 'all')} className="btn btn-sm btn-success text-white">Export Semua ({processedResults.length}) ▾</button>
                 {showExportMenu === 'all' && (
@@ -479,6 +502,15 @@ export default function DashboardPage() {
         template={waTemplate}
         onSave={setWaTemplate}
         sampleData={results[0]}
+      />
+      <SaveToListModal
+        isOpen={showSaveModal}
+        onClose={() => {
+          setShowSaveModal(false);
+          // Optional: clear selection after saving?
+          // setSelectedIndices(new Set());
+        }}
+        selectedData={selectedData}
       />
     </div>
   );
