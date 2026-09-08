@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 
 const words = [
   'Freelancer',
-  'Sales',
+  'Sales B2B',
   'Supplier',
   'Eksportir',
-  'Pemilik Bisnis',
+  'Pemilik Toko',
   'Agen Properti',
-  'Tim Marketing'
+  'Tim Marketing',
 ];
 
 export default function RotatingText() {
@@ -18,43 +18,33 @@ export default function RotatingText() {
   const [reverse, setReverse] = useState(false);
   const [blink, setBlink] = useState(true);
 
-  // Blinking cursor effect
   useEffect(() => {
-    const timeout = setTimeout(() => setBlink((prev) => !prev), 500);
+    const timeout = setTimeout(() => setBlink((v) => !v), 500);
     return () => clearTimeout(timeout);
   }, [blink]);
 
-  // Typewriter effect
   useEffect(() => {
-    if (index >= words.length) {
-      setIndex(0);
-      return;
+    if (subIndex === words[index].length + 1 && !reverse) {
+      const t = setTimeout(() => setReverse(true), 1400);
+      return () => clearTimeout(t);
     }
-
-    if (
-      subIndex === words[index].length + 1 && 
-      !reverse
-    ) {
-      setTimeout(() => setReverse(true), 1500); // Wait before deleting
-      return;
-    }
-
     if (subIndex === 0 && reverse) {
       setReverse(false);
-      setIndex((prev) => (prev + 1) % words.length);
+      setIndex((v) => (v + 1) % words.length);
       return;
     }
-
-    const timeout = setTimeout(() => {
-      setSubIndex((prev) => prev + (reverse ? -1 : 1));
-    }, Math.max(reverse ? 50 : 100, parseInt((Math.random() * 50).toString())));
-
-    return () => clearTimeout(timeout);
+    const speed = reverse ? 45 : 90 + Math.random() * 40;
+    const t = setTimeout(() => setSubIndex((v) => v + (reverse ? -1 : 1)), speed);
+    return () => clearTimeout(t);
   }, [subIndex, index, reverse]);
 
   return (
-    <span className="text-primary inline-block min-w-[150px] md:min-w-[250px] text-left">
-      {`${words[index].substring(0, subIndex)}${blink ? '|' : ' '}`}
+    <span
+      className="text-primary inline-block min-w-[160px] md:min-w-[280px] text-left"
+      aria-label={words[index]}
+    >
+      {words[index].substring(0, subIndex)}
+      <span className={`transition-opacity ${blink ? 'opacity-100' : 'opacity-0'}`}>|</span>
     </span>
   );
 }

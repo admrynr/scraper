@@ -144,12 +144,12 @@ export default function RegisterPage() {
             <div className="text-5xl mb-4">📧</div>
             <h2 className="text-xl font-bold text-base-content mb-2">Cek Email Anda!</h2>
             <p className="text-sm text-base-content/70 leading-relaxed mb-4">
-              Kami telah mengirim link verifikasi ke{' '}
+              Kami telah mengirim link aktivasi ke{' '}
               <span className="font-semibold text-primary">{email}</span>.
-              Klik link tersebut untuk mengaktifkan akun Anda.
+              Klik link tersebut untuk mengaktifkan akun Anda dan langsung bisa login.
             </p>
-            <div className="alert alert-info shadow-sm p-3 text-xs rounded-md mb-5 text-left">
-              <span>⏳ Setelah email diverifikasi, akun Anda masih perlu <strong>disetujui admin</strong> sebelum bisa login.</span>
+            <div className="alert alert-success shadow-sm p-3 text-xs rounded-md mb-5 text-left">
+              <span>✅ Setelah klik link di email, akun Anda <strong>langsung aktif</strong> dan siap digunakan — tidak perlu menunggu persetujuan apapun.</span>
             </div>
             {resendMsg && (
               <div className={`alert shadow-sm p-2 text-xs rounded-md mb-3 ${resendMsg.includes('Gagal') ? 'alert-error' : 'alert-success'}`}>

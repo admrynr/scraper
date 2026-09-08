@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
           full_name,
           phone: phone || null,
           role: 'user',
-          is_approved: false,
+          is_approved: true,
         },
       },
     });
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         full_name,
         phone: phone || null,
         role: 'user',
-        is_approved: false,
+        is_approved: true,
       },
       { onConflict: 'id' }
     );

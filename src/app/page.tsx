@@ -6,27 +6,39 @@ import RotatingText from '@/components/RotatingText';
 
 export default async function Home() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let profile = null;
+  if (user) {
+    const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    profile = data;
+  }
+
+  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
+  const dashboardHref = isAdmin ? '/admin' : '/dashboard';
+  const registerHref = user ? dashboardHref : '/auth/register';
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col font-sans">
-      
-      {/* 3.1 Header / Nav */}
+
+      {/* ── Navbar ── */}
       <header className="sticky top-0 z-50 bg-base-100/80 backdrop-blur-md border-b border-base-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Logo />
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-5">
             <Link href="#fitur" className="text-sm font-medium text-base-content/70 hover:text-primary transition-colors hidden sm:block">Fitur</Link>
             <Link href="#cara-kerja" className="text-sm font-medium text-base-content/70 hover:text-primary transition-colors hidden sm:block">Cara Kerja</Link>
             <Link href="#pricing" className="text-sm font-medium text-base-content/70 hover:text-primary transition-colors hidden sm:block">Harga</Link>
             <Link href="#faq" className="text-sm font-medium text-base-content/70 hover:text-primary transition-colors hidden sm:block">FAQ</Link>
             <ThemeToggle />
             {user ? (
-              <Link href="/dashboard" className="btn btn-primary btn-sm px-6">Buka Dashboard</Link>
+              <Link href={dashboardHref} className="btn btn-primary btn-sm px-5">Buka Dashboard</Link>
             ) : (
               <>
-                <Link href="/auth/login" className="text-sm font-semibold text-base-content/80 hover:text-primary transition-colors hidden sm:block">Log in</Link>
-                <Link href="/auth/register" className="btn btn-primary btn-sm px-6 shadow-sm shadow-primary/30">Coba Gratis</Link>
+                <Link href="/auth/login" className="text-sm font-semibold text-base-content/70 hover:text-primary transition-colors hidden sm:block">Masuk</Link>
+                <Link href="/auth/register" className="btn btn-primary btn-sm px-5">Coba Gratis</Link>
               </>
             )}
           </nav>
@@ -35,56 +47,86 @@ export default async function Home() {
 
       <main className="flex-grow">
 
-        {/* 3.2 Hero Section */}
-        <section className="pt-24 pb-16 px-4 text-center max-w-5xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-base-content leading-tight mb-6 tracking-tight flex flex-col items-center">
-            <span>Kami Membantu</span>
-            <span><RotatingText /></span>
-            <span>Menemukan Klien Baru — Tanpa Perlu Iklan.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-base-content/70 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Temukan ratusan calon klien di sekitar lokasi target Anda—lengkap dengan nomor telepon dan WhatsApp siap hubungi—hanya dalam hitungan detik.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href={user ? "/dashboard" : "/auth/register"} className="btn btn-primary btn-lg px-8 rounded-full shadow-lg shadow-primary/30">
-              Daftar Sekarang, Gratis 5x Pencarian
-            </Link>
-            <Link href="#demo" className="btn btn-outline btn-lg px-8 rounded-full">
-              Tonton Demo Aplikasi &rarr;
-            </Link>
+        {/* ── 1. Hero ── */}
+        <section className="pt-20 pb-12 px-4 text-center max-w-5xl mx-auto">
+
+          {/* Google Maps badge */}
+          <div className="inline-flex items-center gap-2 bg-base-200/80 border border-base-300 text-base-content/80 px-4 py-1.5 rounded-full text-sm font-medium mb-8 shadow-xs">
+            <svg className="w-4 h-4 text-red-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+            </svg>
+            <span>Powered by Google Maps</span>
           </div>
-          <p className="text-sm text-base-content/50 font-medium mt-4">
-            Tanpa kartu kredit. Langsung bisa coba.
+
+          {/* Dynamic headline */}
+          <h1 className="text-4xl md:text-6xl font-extrabold text-base-content leading-[1.15] mb-6 tracking-tight">
+            Kami Membantu{' '}
+            <span className="block md:inline">
+              <RotatingText />
+            </span>
+            {' '}Dapat Klien Baru —{' '}
+            <span className="text-primary">Tanpa Iklan.</span>
+          </h1>
+
+          <p className="text-lg md:text-xl text-base-content/70 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Cukup ketik jenis bisnis dan pilih wilayah, Prospekto langsung kumpulkan ratusan nama, nomor telepon, dan kontak WhatsApp calon klien — dalam hitungan detik.
           </p>
 
-          {/* App mockup / Visual Products */}
-          <div className="mt-16 relative mx-auto w-full max-w-4xl" id="demo">
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent blur-3xl -z-10 rounded-full"></div>
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+            <Link href={registerHref} className="btn btn-primary btn-lg px-8 rounded-full shadow-lg shadow-primary/30">
+              Daftar Akun, Gratis 5x Pencarian
+            </Link>
+            <Link href="#demo" className="btn btn-ghost btn-lg px-6 rounded-full">
+              Tonton Demo ↓
+            </Link>
+          </div>
+          <p className="text-xs text-base-content/50">Gratis 5x scrape setelah daftar akun. Tanpa kartu kredit.</p>
+
+          {/* App screenshot mockup */}
+          <div className="mt-14 relative mx-auto w-full max-w-4xl" id="demo">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/15 to-transparent blur-3xl -z-10 rounded-full pointer-events-none" />
             <div className="mockup-browser border border-base-300 bg-base-100 shadow-2xl">
               <div className="mockup-browser-toolbar">
-                <div className="input border border-base-300">https://prospekto.com/dashboard</div>
+                <div className="input border border-base-300 text-sm">prospekto.com/dashboard</div>
               </div>
-              <div className="bg-base-200/50 p-6 flex flex-col gap-4 text-left border-t border-base-300">
-                <div className="bg-base-100 rounded-box border border-base-300 overflow-hidden">
-                  <table className="table w-full">
-                    <thead className="bg-base-200">
+              <div className="bg-base-200/60 p-5 border-t border-base-300 text-left">
+                {/* Fake search bar */}
+                <div className="flex gap-3 mb-4">
+                  <div className="flex-1 bg-base-100 border border-base-300 rounded-lg px-4 py-2 text-sm text-base-content/50">
+                    Cari: &quot;Kontraktor&quot; — Kecamatan Tembalang, Semarang
+                  </div>
+                  <div className="btn btn-primary btn-sm px-5">Cari</div>
+                </div>
+                {/* Fake table */}
+                <div className="bg-base-100 rounded-xl border border-base-300 overflow-hidden">
+                  <table className="table w-full text-sm">
+                    <thead className="bg-base-200 text-base-content/60 text-xs uppercase tracking-wide">
                       <tr>
-                        <th>Business Name</th><th>Rating</th><th>Alamat</th><th>Aksi</th>
+                        <th>Nama Bisnis</th>
+                        <th>Rating</th>
+                        <th>Alamat</th>
+                        <th>Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td><div className="font-bold">Barbershop Kekinian</div><div className="text-xs text-primary">Website</div></td>
-                        <td><div className="badge badge-warning badge-sm">⭐ 4.8</div></td>
-                        <td className="text-sm">Jl. Jend. Sudirman No. 10</td>
-                        <td><div className="btn btn-xs btn-success text-white">Chat WA</div></td>
-                      </tr>
-                      <tr>
-                        <td><div className="font-bold">Kopi Senja</div><div className="text-xs text-base-content/40">No Website</div></td>
-                        <td><div className="badge badge-warning badge-sm">⭐ 4.5</div></td>
-                        <td className="text-sm">Jl. Merdeka No. 45</td>
-                        <td><div className="btn btn-xs btn-success text-white">Chat WA</div></td>
-                      </tr>
+                      {[
+                        { name: 'CV Karya Mandiri', website: true, rating: '4.9', addr: 'Jl. Ngesrep No. 5' },
+                        { name: 'Bangun Jaya Konstruksi', website: false, rating: '4.7', addr: 'Jl. Durian Raya No. 22' },
+                        { name: 'Graha Cipta Bangunan', website: true, rating: '4.5', addr: 'Jl. Profesor Sudharto' },
+                      ].map((row) => (
+                        <tr key={row.name}>
+                          <td>
+                            <div className="font-semibold">{row.name}</div>
+                            <div className={`text-xs ${row.website ? 'text-primary' : 'text-base-content/30'}`}>
+                              {row.website ? 'punya website' : 'belum ada website'}
+                            </div>
+                          </td>
+                          <td><span className="badge badge-warning badge-sm">⭐ {row.rating}</span></td>
+                          <td className="text-base-content/60">{row.addr}</td>
+                          <td><span className="btn btn-xs btn-success text-white">Chat WA</span></td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -93,276 +135,344 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* 3.3 Stakes Section (Tragedi yang Dihindari) */}
+        {/* ── 2. Stakes (Apa yang Hilang Kalau Tidak Bertindak) ── */}
         <section className="py-20 bg-base-200 border-y border-base-300">
           <div className="max-w-5xl mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-12 max-w-3xl mx-auto">
-              Setiap Hari Menunda, Kompetitor Anda Sudah Menghubungi Klien Itu Lebih Dulu
+            <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-4 max-w-3xl mx-auto leading-snug">
+              Setiap hari yang berlalu,<br />kompetitor Anda sudah satu langkah lebih dekat ke klien itu.
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-              <div className="bg-base-100 p-8 rounded-2xl border border-base-300 shadow-sm">
-                <div className="text-4xl mb-4">🏃‍♂️</div>
-                <h3 className="text-xl font-bold mb-3">Leads Melayang ke Kompetitor</h3>
-                <p className="text-base-content/80 leading-relaxed">
-                  Ratusan calon klien di wilayah Anda mungkin sudah dihubungi pesaing yang bergerak lebih cepat.
-                </p>
-              </div>
-              <div className="bg-base-100 p-8 rounded-2xl border border-base-300 shadow-sm">
-                <div className="text-4xl mb-4">⏳</div>
-                <h3 className="text-xl font-bold mb-3">Waktu Habis untuk Kerja Manual</h3>
-                <p className="text-base-content/80 leading-relaxed">
-                  Jam kerja terkuras untuk mencari data satu-per-satu di Google Maps, alih-alih fokus closing.
-                </p>
-              </div>
-              <div className="bg-base-100 p-8 rounded-2xl border border-base-300 shadow-sm">
-                <div className="text-4xl mb-4">📉</div>
-                <h3 className="text-xl font-bold mb-3">Target Penjualan Meleset</h3>
-                <p className="text-base-content/80 leading-relaxed">
-                  Database prospek yang itu-itu saja bikin pipeline stagnan dan target bulanan sulit tercapai.
-                </p>
-              </div>
+            <p className="text-base-content/60 text-base mb-12">Ini bukan soal siapa yang paling keras bekerja. Ini soal siapa yang bergerak lebih cepat.</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  icon: '🏃‍♂️',
+                  title: 'Leads jatuh ke tangan kompetitor',
+                  body: 'Ratusan calon klien di area Anda sudah aktif dicari oleh pesaing yang lebih dulu bergerak. Setiap jam adalah kesempatan yang terlewat.',
+                },
+                {
+                  icon: '⏳',
+                  title: 'Waktu kerja habis di hal yang salah',
+                  body: 'Scrolling Google Maps berjam-jam, copy-paste nomor satu per satu — sementara target closing bulanan terus menghitung mundur.',
+                },
+                {
+                  icon: '📉',
+                  title: 'Pipeline stagnan, target meleset',
+                  body: 'Kalau prospek yang dihubungi itu-itu saja, hasilnya pun akan sama. Bisnis butuh aliran calon klien baru yang segar dan relevan.',
+                },
+              ].map((card) => (
+                <div key={card.title} className="bg-base-100 p-7 rounded-2xl border border-base-300 shadow-sm text-left">
+                  <div className="text-3xl mb-4">{card.icon}</div>
+                  <h3 className="font-bold text-lg mb-2">{card.title}</h3>
+                  <p className="text-base-content/70 text-sm leading-relaxed">{card.body}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* 3.4 Guide Section (Empati + Otoritas + Fitur) */}
+        {/* ── 3. Guide (Empati → Otoritas → Fitur) ── */}
         <section id="fitur" className="py-24 px-4 max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-xl md:text-2xl italic font-medium leading-relaxed text-base-content/80 max-w-4xl mx-auto mb-8">
-              "Kami tahu rasanya: budget iklan terbatas, tapi target klien tetap harus tercapai. Mencari prospek manual itu melelahkan — dan waktu Anda terlalu berharga untuk itu."
-            </p>
-            <h2 className="text-3xl font-bold text-base-content mb-4">
-              Karena itu kami bangun Prospekto: cara tercepat mendapatkan klien baru tanpa bergantung pada iklan.
+            <p className="text-base-content/60 text-sm font-semibold uppercase tracking-widest mb-4">Kami paham situasinya</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-base-content leading-snug mb-5 max-w-3xl mx-auto">
+              Budget iklan terbatas, tapi target harus tetap tercapai.<br />
+              <span className="text-primary">Kami buatkan jalan pintas yang lebih masuk akal.</span>
             </h2>
+            <p className="text-base-content/60 max-w-xl mx-auto">
+              Prospekto bukan sekadar tools scraping. Ini adalah mesin pencari prospek yang dirancang khusus untuk cara jualan di Indonesia — dari kelurahan ke kelurahan, langsung chat WA.
+            </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="card bg-base-100 border border-base-300 hover:shadow-lg transition-all duration-200">
-              <div className="card-body">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 text-2xl">⚡</div>
-                <h3 className="card-title text-lg mb-2">Pencarian Super Cepat, Akurat sampai Kelurahan</h3>
-                <p className="text-base-content/70 leading-relaxed">
-                  Data bisnis real-time dari Google Maps, bisa ditarget dari level provinsi sampai kelurahan — bukan cuma kota besar.
-                </p>
-              </div>
-            </div>
-            <div className="card bg-base-100 border border-base-300 hover:shadow-lg transition-all duration-200">
-              <div className="card-body">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 text-2xl">💬</div>
-                <h3 className="card-title text-lg mb-2">Outreach 1-Klik ke WhatsApp</h3>
-                <p className="text-base-content/70 leading-relaxed">
-                  Template pesan otomatis terisi nama bisnis, tinggal klik "Chat WA" — tidak perlu ketik satu-satu.
-                </p>
-              </div>
-            </div>
-            <div className="card bg-base-100 border border-base-300 hover:shadow-lg transition-all duration-200">
-              <div className="card-body">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 text-2xl">🎯</div>
-                <h3 className="card-title text-lg mb-2">Sistem Campaign Bertarget</h3>
-                <p className="text-base-content/70 leading-relaxed">
-                  Atur kata kunci & wilayah pencarian sekaligus, supaya hasil yang didapat lebih relevan dengan bisnis Anda.
-                </p>
-              </div>
-            </div>
-            <div className="card bg-base-100 border border-base-300 hover:shadow-lg transition-all duration-200">
-              <div className="card-body">
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 text-2xl">📁</div>
-                <h3 className="card-title text-lg mb-2">Simpan & Ekspor Sesuai Kebutuhan</h3>
-                <p className="text-base-content/70 leading-relaxed">
-                  Simpan data prospek pilihan Anda ke dashboard, atau ekspor ke Excel/CSV kapan saja.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* 3.5 Plan Section — "3 Langkah Mudah" */}
-        <section id="cara-kerja" className="py-24 bg-neutral text-neutral-content px-4">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">Dapatkan Klien Baru Hanya dalam 3 Langkah</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
-              <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-neutral-content/20 -z-0"></div>
-              
-              <div className="flex flex-col items-center text-center relative z-10">
-                <div className="w-24 h-24 rounded-full bg-neutral border-4 border-primary text-primary flex items-center justify-center text-3xl font-bold mb-6">1</div>
-                <h3 className="text-xl font-bold mb-3">Tentukan Target Anda</h3>
-                <p className="opacity-80 text-sm px-2">
-                  Masukkan kata kunci bisnis (misal "Cafe" atau "Kontraktor") dan pilih wilayah — dari Provinsi hingga Kelurahan.
-                </p>
-              </div>
-              
-              <div className="flex flex-col items-center text-center relative z-10">
-                <div className="w-24 h-24 rounded-full bg-neutral border-4 border-primary text-primary flex items-center justify-center text-3xl font-bold mb-6">2</div>
-                <h3 className="text-xl font-bold mb-3">Biarkan Sistem Bekerja</h3>
-                <p className="opacity-80 text-sm px-2">
-                  Klik cari, dan lihat ratusan data nama bisnis, rating, website, dan nomor telepon terkumpul otomatis dalam hitungan detik.
-                </p>
-              </div>
-              
-              <div className="flex flex-col items-center text-center relative z-10">
-                <div className="w-24 h-24 rounded-full bg-neutral border-4 border-primary text-primary flex items-center justify-center text-3xl font-bold mb-6">3</div>
-                <h3 className="text-xl font-bold mb-3">Hubungi Langsung, Hari Ini Juga</h3>
-                <p className="opacity-80 text-sm px-2">
-                  Filter nomor yang valid, ekspor ke Excel, atau langsung kirim pesan penawaran lewat tombol "Chat WA".
-                </p>
-              </div>
-            </div>
-            
-            <div className="mt-16 text-center">
-              <Link href="/auth/register" className="btn btn-primary btn-lg rounded-full px-10 shadow-lg shadow-primary/20 text-neutral">
-                Mulai Langkah 1 — Coba Gratis Sekarang
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* 3.6 Explanatory Paragraph / Success Vision */}
-        <section className="py-24 px-4 max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-8">
-            Bayangkan Bisnis Anda Setelah Berhenti Mencari Klien Secara Manual
-          </h2>
-          <p className="text-lg md:text-xl text-base-content/80 leading-relaxed mb-12">
-            Dengan Prospekto, Anda memiliki database prospek yang melimpah dan tertarget, siap dihubungi kapan pun dibutuhkan. Proses penawaran via WhatsApp jadi cepat, rapi, dan otomatis. Waktu kerja jadi jauh lebih efisien, tim bisa fokus closing—bukan mencari data—dan bisnis Anda tumbuh lebih cepat dari sebelumnya.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-6 md:gap-12">
-            <div className="flex items-center gap-3 justify-center">
-              <div className="w-8 h-8 rounded-full bg-success/20 text-success flex items-center justify-center text-xl">✓</div>
-              <span className="font-semibold text-base-content">Prospek Melimpah</span>
-            </div>
-            <div className="flex items-center gap-3 justify-center">
-              <div className="w-8 h-8 rounded-full bg-success/20 text-success flex items-center justify-center text-xl">✓</div>
-              <span className="font-semibold text-base-content">Outreach Otomatis</span>
-            </div>
-            <div className="flex items-center gap-3 justify-center">
-              <div className="w-8 h-8 rounded-full bg-success/20 text-success flex items-center justify-center text-xl">✓</div>
-              <span className="font-semibold text-base-content">Waktu Lebih Efisien</span>
-            </div>
-          </div>
-        </section>
-
-        {/* 3.7 Pricing Section */}
-        <section id="pricing" className="py-24 px-4 bg-base-200 border-y border-base-300">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-base-content">Investasi Kecil, Dampak Besar untuk Pipeline Penjualan Anda</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              
-              {/* Gratis */}
-              <div className="card bg-base-100 border border-base-300 shadow-sm">
-                <div className="card-body">
-                  <h3 className="text-2xl font-bold text-base-content">Gratis</h3>
-                  <p className="text-base-content/60 text-sm mb-6">Coba dulu, buktikan hasilnya</p>
-                  <ul className="space-y-4 text-base-content/80 mb-8 flex-grow">
-                    <li className="flex gap-3"><span className="text-primary">✓</span> 5x pencarian/hari</li>
-                    <li className="flex gap-3"><span className="text-primary">✓</span> Maksimal 20 data per pencarian</li>
-                    <li className="flex gap-3"><span className="text-primary">✓</span> Cocok untuk mencoba kualitas data</li>
-                  </ul>
-                  <Link href="/auth/register" className="btn btn-outline btn-primary w-full">Coba Gratis Sekarang</Link>
-                </div>
-              </div>
-
-              {/* Aktivasi */}
-              <div className="card bg-primary text-primary-content border-2 border-primary shadow-xl shadow-primary/20 relative overflow-hidden">
-                <div className="absolute top-4 right-4">
-                  <div className="badge bg-white text-primary font-bold border-0">Sekali Bayar</div>
-                </div>
-                <div className="card-body">
-                  <h3 className="text-2xl font-bold">Aktivasi — Rp 50.000</h3>
-                  <p className="text-primary-content/80 text-sm mb-6">Buka semua fitur dan batas ekstraksi</p>
-                  <ul className="space-y-4 text-primary-content/90 mb-8 flex-grow">
-                    <li className="flex gap-3"><span>✓</span> Buka semua fitur (export, chat WA, hingga 1000 baris data)</li>
-                    <li className="flex gap-3"><span>✓</span> Bonus 50 kredit awal</li>
-                    <li className="flex gap-3"><span>✓</span> Top-up kredit kapan saja (Rp 50.000 = 70 kredit, 1 kredit = 100 data)</li>
-                  </ul>
-                  <Link href="/auth/register" className="btn bg-white text-primary hover:bg-white/90 border-0 w-full font-bold">Aktivasi Sekarang</Link>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </section>
-
-        {/* 3.8 FAQ Section */}
-        <section id="faq" className="py-24 px-4 max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-base-content mb-12">Pertanyaan yang Sering Diajukan</h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {[
-              { q: 'Dari mana sumber data prospeknya, apakah akurat & real-time?', a: 'Data diambil langsung dan real-time dari Google Maps, mencakup nama bisnis, rating, ulasan, alamat, nomor telepon, dan website yang terdaftar secara publik.' },
-              { q: 'Apakah nomor WhatsApp yang didapat valid dan aktif?', a: 'Sistem kami mendeteksi nomor telepon yang tersedia di Google Maps. Meskipun banyak di antaranya yang terhubung ke WhatsApp, kami tidak menjamin 100% nomor tersebut adalah nomor WA aktif. Anda bisa memfilternya langsung saat outreach.' },
-              { q: 'Apa bedanya akun Gratis dan Aktivasi?', a: 'Akun gratis dibatasi 5x pencarian/hari dengan maksimal 20 data per pencarian dan fitur terbatas. Akun yang diaktivasi dapat membuka semua fitur seperti export Excel, Chat WA, dan batas pencarian hingga 1000 baris data per sesi.' },
-              { q: 'Bagaimana cara top-up kredit, dan berapa lama berlaku?', a: 'Anda dapat top-up kredit kapan saja melalui dashboard (Rp 50.000 untuk 70 kredit). Kredit ini tidak memiliki masa kedaluwarsa dan akan tetap ada sampai Anda menggunakannya.' },
-              { q: 'Apakah data yang saya ambil bisa hilang jika refresh halaman?', a: 'Tidak. Hasil pencarian Anda tersimpan sementara secara otomatis di penyimpanan browser (local storage) Anda, jadi data tidak akan hilang walau tidak sengaja me-refresh halaman.' },
-              { q: 'Apakah aman digunakan untuk data bisnis yang bersaing dengan saya?', a: 'Sangat aman. Prospekto hanya mengumpulkan data publik dari Google Maps, sehingga Anda tidak melanggar privasi apa pun, dan bisnis tersebut tidak akan tahu Anda mencari data mereka.' },
-              { q: 'Bagaimana jika pencarian saya terputus di tengah jalan (limit waktu server)?', a: 'Sistem kami dirancang untuk tetap menyimpan dan menampilkan hasil parsial yang sudah berhasil didapat sebelum terputus, sehingga Anda tidak kehilangan data sama sekali.' }
-            ].map((item, i) => (
-              <div key={i} className="collapse collapse-arrow bg-base-100 border border-base-300">
-                <input type="radio" name="faq-accordion" defaultChecked={i === 0} />
-                <div className="collapse-title text-base font-semibold text-base-content">{item.q}</div>
-                <div className="collapse-content text-base-content/70 text-sm leading-relaxed"><p>{item.a}</p></div>
+              {
+                icon: '⚡',
+                title: 'Cepat, akurat sampai level kelurahan',
+                body: 'Pilih wilayah dari provinsi sampai kelurahan. Data bisnis real-time langsung muncul — bukan cuma kota besar, tapi juga daerah-daerah yang biasanya luput dari radar.',
+              },
+              {
+                icon: '💬',
+                title: 'Hubungi via WhatsApp, satu klik cukup',
+                body: 'Template pesan sudah terisi otomatis — nama bisnis, detail penawaran, semua siap. Klik "Chat WA", langsung masuk ke percakapan. Tidak perlu mengetik ulang.',
+              },
+              {
+                icon: '🎯',
+                title: 'Campaign terstruktur, bukan asal cari',
+                body: 'Atur beberapa kata kunci dan wilayah sekaligus dalam satu campaign. Hasilnya lebih relevan, lebih mudah dikelola, dan tidak tercecer.',
+              },
+              {
+                icon: '📁',
+                title: 'Data bisa disimpan atau diekspor kapan saja',
+                body: 'Simpan prospek pilihan ke dashboard, atau ekspor ke Excel / CSV untuk dipakai di CRM atau dibagi ke tim. Format siap pakai, tidak perlu diolah lagi.',
+              },
+            ].map((f) => (
+              <div key={f.title} className="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-lg transition-all duration-200">
+                <div className="card-body gap-3">
+                  <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center text-2xl shrink-0">{f.icon}</div>
+                  <h3 className="font-bold text-base">{f.title}</h3>
+                  <p className="text-base-content/65 text-sm leading-relaxed">{f.body}</p>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* 3.9 Final CTA */}
+        {/* ── 4. Plan (3 Langkah) ── */}
+        <section id="cara-kerja" className="py-24 bg-neutral text-neutral-content px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <p className="text-neutral-content/50 text-sm font-semibold uppercase tracking-widest mb-3">Sesederhana ini</p>
+              <h2 className="text-3xl md:text-4xl font-bold">Dari nol sampai ada klien baru — cuma 3 langkah.</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
+              <div className="hidden md:block absolute top-10 left-[18%] right-[18%] h-px bg-neutral-content/15" />
+
+              {[
+                {
+                  n: '1',
+                  title: 'Tentukan target Anda',
+                  body: 'Ketik jenis bisnis yang dicari — misalnya "Salon", "Supplier Kayu", atau "Kontraktor" — lalu pilih wilayah dari provinsi hingga kelurahan.',
+                },
+                {
+                  n: '2',
+                  title: 'Biarkan Prospekto bekerja',
+                  body: 'Sistem langsung mengumpulkan nama bisnis, nomor telepon, rating, alamat, dan website secara otomatis. Hasilnya muncul dalam hitungan detik.',
+                },
+                {
+                  n: '3',
+                  title: 'Hubungi hari ini juga',
+                  body: 'Filter nomor yang valid, ekspor ke Excel kalau perlu, atau langsung kirim penawaran via tombol "Chat WA". Semua dari satu halaman.',
+                },
+              ].map((step) => (
+                <div key={step.n} className="flex flex-col items-center text-center relative z-10">
+                  <div className="w-20 h-20 rounded-full border-2 border-primary text-primary flex items-center justify-center text-2xl font-extrabold mb-6 bg-neutral">
+                    {step.n}
+                  </div>
+                  <h3 className="font-bold text-xl mb-3">{step.title}</h3>
+                  <p className="text-neutral-content/70 text-sm leading-relaxed px-3">{step.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-16 text-center">
+              <Link href={registerHref} className="btn btn-primary btn-lg rounded-full px-10 shadow-lg">
+                Mulai Langkah Pertama — Gratis
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 5. Success Vision ── */}
+        <section className="py-24 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-6">
+              Bayangkan kalau database prospek Anda<br className="hidden md:block" /> tidak pernah kehabisan.
+            </h2>
+            <p className="text-base-content/70 text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
+              Dengan Prospekto, Anda punya aliran calon klien yang bisa diperbarui kapan saja — tertarget, siap dihubungi, dan tidak perlu proses manual yang panjang. Tim Anda bisa fokus ke hal yang sebenarnya penting: closing.
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-6">
+              {[
+                { icon: '🎯', label: 'Prospek selalu segar & relevan' },
+                { icon: '💬', label: 'Outreach WA lebih cepat & rapi' },
+                { icon: '⚡', label: 'Tim bisa fokus closing, bukan cari data' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-3 bg-base-200 border border-base-300 px-5 py-3 rounded-full">
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="font-semibold text-base-content text-sm">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 6. Pricing ── */}
+        <section id="pricing" className="py-24 px-4 bg-base-200 border-y border-base-300">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-14">
+              <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-3">Mulai gratis, upgrade saat butuh lebih banyak.</h2>
+              <p className="text-base-content/60">Tidak ada biaya langganan. Tidak ada kejutan tagihan.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-7 max-w-3xl mx-auto">
+
+              {/* Free tier */}
+              <div className="card bg-base-100 border border-base-300 shadow-sm">
+                <div className="card-body gap-4">
+                  <div>
+                    <div className="badge badge-outline mb-2">Gratis Selamanya</div>
+                    <h3 className="text-2xl font-extrabold text-base-content">Rp 0</h3>
+                    <p className="text-base-content/50 text-sm mt-1">Coba dulu, rasakan manfaatnya langsung</p>
+                  </div>
+                  <ul className="space-y-3 text-sm text-base-content/75 flex-grow">
+                    {[
+                      'Gratis 5x pencarian setelah daftar akun',
+                      'Maksimal 20 hasil per pencarian',
+                      'Filter & urutkan data',
+                      'Data tersimpan di browser',
+                    ].map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <span className="text-primary mt-0.5">✓</span> {f}
+                      </li>
+                    ))}
+                    {[
+                      'Export Excel / CSV',
+                      'Chat WA langsung',
+                      'Hingga 1.000 data per sesi',
+                    ].map((f) => (
+                      <li key={f} className="flex items-start gap-2 opacity-35">
+                        <span className="mt-0.5">🔒</span> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={registerHref} className="btn btn-outline btn-primary w-full">Mulai Gratis</Link>
+                </div>
+              </div>
+
+              {/* Paid tier */}
+              <div className="card bg-primary text-primary-content border-2 border-primary shadow-xl shadow-primary/25 relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <div className="badge bg-white/25 text-white border-0 font-semibold">Sekali Bayar</div>
+                </div>
+                <div className="card-body gap-4">
+                  <div>
+                    <h3 className="text-2xl font-extrabold">Aktivasi — Rp 50.000</h3>
+                    <p className="text-primary-content/70 text-sm mt-1">Buka semua fitur + bonus 50 kredit awal</p>
+                  </div>
+                  <ul className="space-y-3 text-sm text-primary-content/90 flex-grow">
+                    {[
+                      'Semua fitur di paket Gratis',
+                      'Export Excel & CSV tanpa batas',
+                      'Chat WA 1 klik dengan template pesan',
+                      'Hingga 1.000 data per sesi pencarian',
+                      'Bonus 50 kredit saat aktivasi',
+                      'Top-up kapan saja (Rp 50.000 = 70 kredit)',
+                    ].map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <span className="mt-0.5">✓</span> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-primary-content/50 text-xs">1 kredit = 100 baris data</p>
+                  <Link href={registerHref} className="btn bg-white text-primary hover:bg-white/90 border-0 w-full font-bold">Aktivasi Sekarang</Link>
+                </div>
+              </div>
+
+            </div>
+            <p className="text-center text-xs text-base-content/40 mt-6">Pembayaran diproses via Midtrans yang terenkripsi. Tidak ada biaya tersembunyi.</p>
+          </div>
+        </section>
+
+        {/* ── 7. FAQ ── */}
+        <section id="faq" className="py-24 px-4 max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-base-content mb-12">Ada yang masih ingin ditanyakan?</h2>
+          <div className="space-y-3">
+            {[
+              {
+                q: 'Datanya dari mana? Apakah akurat?',
+                a: 'Data diambil langsung dari Google Maps secara real-time — persis seperti yang Anda lihat ketika mencari di browser. Informasi yang tersedia mencakup nama bisnis, rating, jumlah ulasan, alamat, nomor telepon, dan website.',
+              },
+              {
+                q: 'Nomor telepon yang muncul bisa dihubungi via WhatsApp?',
+                a: 'Sebagian besar iya, karena banyak pemilik bisnis menggunakan nomor yang sama untuk WA dan telepon. Tapi kami tidak bisa menjamin 100% setiap nomor aktif di WhatsApp — Anda bisa langsung coba klik tombol "Chat WA" untuk memverifikasinya.',
+              },
+              {
+                q: 'Apa yang berbeda antara akun Gratis dan Aktivasi?',
+                a: 'Setelah mendaftar akun, Anda langsung mendapatkan gratis 5x kuota pencarian (maks. 20 hasil per pencarian) untuk mencoba fitur Prospekto. Akun aktivasi membuka semua fitur tanpa batas — export Excel & CSV, chat WA langsung, dan scraping hingga 1.000 data per sesi — cukup sekali bayar Rp 50.000.',
+              },
+              {
+                q: 'Kalau halaman saya refresh, data hilang nggak?',
+                a: 'Tidak hilang. Hasil pencarian otomatis tersimpan di browser Anda (local storage), jadi walau halaman ter-refresh atau koneksi sempat putus, data tetap ada saat Anda kembali.',
+              },
+              {
+                q: 'Gimana cara top-up kredit, dan apakah kredit punya masa berlaku?',
+                a: 'Top-up bisa dilakukan kapan saja lewat halaman dashboard. Paket tersedia mulai Rp 50.000 untuk 70 kredit (1 kredit = 100 baris data). Kredit tidak punya masa kadaluwarsa — akan tetap ada sampai Anda pakai.',
+              },
+              {
+                q: 'Kalau pencarian tiba-tiba berhenti di tengah jalan, datanya hilang?',
+                a: 'Tidak. Sistem Prospekto menyimpan hasil secara bertahap — jadi walau ada kendala di tengah proses, data yang sudah berhasil dikumpulkan tetap bisa Anda lihat dan gunakan.',
+              },
+              {
+                q: 'Apakah ini aman dan legal digunakan?',
+                a: 'Ya. Prospekto hanya mengakses data yang sudah tersedia secara publik di Google Maps — sama seperti yang siapa pun bisa lihat saat membuka Google. Tidak ada data pribadi yang diambil secara ilegal.',
+              },
+            ].map((item, i) => (
+              <div key={i} className="collapse collapse-arrow bg-base-100 border border-base-300 rounded-xl">
+                <input type="radio" name="faq-accordion" defaultChecked={i === 0} />
+                <div className="collapse-title text-base font-semibold text-base-content">{item.q}</div>
+                <div className="collapse-content">
+                  <p className="text-base-content/70 text-sm leading-relaxed">{item.a}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── 8. Final CTA ── */}
         <section className="py-24 px-4 border-t border-base-300">
-          <div className="max-w-4xl mx-auto bg-gradient-to-br from-primary/10 to-base-200 p-10 md:p-16 rounded-3xl border border-primary/20 text-center shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-primary/20 blur-3xl rounded-full"></div>
-            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-primary/20 blur-3xl rounded-full"></div>
+          <div className="max-w-4xl mx-auto bg-gradient-to-br from-primary/10 via-base-100 to-base-200 p-10 md:p-16 rounded-3xl border border-primary/20 text-center shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 h-48 bg-primary/15 blur-3xl rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-48 h-48 bg-primary/15 blur-3xl rounded-full pointer-events-none" />
             <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-extrabold text-base-content mb-8 tracking-tight">
-                Berhenti Mencari Klien Secara Manual.<br/>Mulai Hari Ini.
+              <h2 className="text-3xl md:text-5xl font-extrabold text-base-content mb-4 leading-tight tracking-tight">
+                Berhenti cari klien manual.<br />
+                <span className="text-primary">Mulai dari sekarang.</span>
               </h2>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/auth/register" className="btn btn-primary btn-lg px-8 rounded-full shadow-lg shadow-primary/30">
-                  Daftar Sekarang, Dapatkan Gratis 5 Kuota Scrape
+              <p className="text-base-content/60 mb-10 max-w-xl mx-auto">
+                Daftar gratis dan rasakan sendiri — tidak butuh kartu kredit, tidak butuh setup panjang. Lima menit dari sekarang Anda sudah bisa lihat ratusan prospek baru.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href={registerHref} className="btn btn-primary btn-lg px-8 rounded-full shadow-lg shadow-primary/30">
+                  Daftar Akun, Dapatkan Gratis 5 Kuota Scrape
                 </Link>
                 <Link href="#demo" className="btn btn-outline btn-lg px-8 rounded-full">
-                  Tonton Demo Aplikasi
+                  Tonton Demo Dulu
                 </Link>
               </div>
+              <p className="text-xs text-base-content/40 mt-5">Gratis 5x scrape saat daftar akun. Tanpa kartu kredit. Setup &lt; 1 menit.</p>
             </div>
           </div>
         </section>
 
       </main>
 
-      {/* Footer */}
-      <footer className="bg-base-200 border-t border-base-300 pt-16 pb-8 px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-          <div className="col-span-1">
-            <div className="mb-4"><Logo /></div>
-            <p className="text-sm text-base-content/70 leading-relaxed">Cara tercepat mendapatkan klien baru tanpa bergantung pada iklan.</p>
+      {/* ── Footer ── */}
+      <footer className="bg-base-200 border-t border-base-300 pt-14 pb-8 px-4">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-10 mb-10">
+          <div className="col-span-2 md:col-span-1">
+            <div className="mb-3"><Logo /></div>
+            <p className="text-sm text-base-content/60 leading-relaxed">
+              Cara tercepat dapat klien baru — tanpa bergantung pada iklan berbayar.
+            </p>
           </div>
           <div>
-            <h4 className="font-bold text-base-content mb-4">Produk</h4>
-            <ul className="space-y-3 text-sm text-base-content/70">
+            <h4 className="font-bold text-base-content mb-4 text-sm">Produk</h4>
+            <ul className="space-y-3 text-sm text-base-content/60">
               <li><Link href="#fitur" className="hover:text-primary transition-colors">Fitur</Link></li>
               <li><Link href="#cara-kerja" className="hover:text-primary transition-colors">Cara Kerja</Link></li>
               <li><Link href="#pricing" className="hover:text-primary transition-colors">Harga</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-base-content mb-4">Akun</h4>
-            <ul className="space-y-3 text-sm text-base-content/70">
+            <h4 className="font-bold text-base-content mb-4 text-sm">Akun</h4>
+            <ul className="space-y-3 text-sm text-base-content/60">
               <li><Link href="/auth/register" className="hover:text-primary transition-colors">Daftar Gratis</Link></li>
-              <li><Link href="/auth/login" className="hover:text-primary transition-colors">Log in</Link></li>
+              <li><Link href="/auth/login" className="hover:text-primary transition-colors">Masuk</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-base-content mb-4">Bantuan</h4>
-            <ul className="space-y-3 text-sm text-base-content/70">
+            <h4 className="font-bold text-base-content mb-4 text-sm">Info</h4>
+            <ul className="space-y-3 text-sm text-base-content/60">
               <li><Link href="#faq" className="hover:text-primary transition-colors">FAQ</Link></li>
               <li><Link href="#" className="hover:text-primary transition-colors">Kebijakan Privasi</Link></li>
               <li><Link href="#" className="hover:text-primary transition-colors">Syarat Layanan</Link></li>
             </ul>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto pt-8 border-t border-base-300 text-center text-sm text-base-content/60">
+        <div className="max-w-6xl mx-auto pt-8 border-t border-base-300 text-center text-xs text-base-content/40">
           <p>© 2026 Prospekto. Seluruh hak cipta dilindungi.</p>
         </div>
       </footer>

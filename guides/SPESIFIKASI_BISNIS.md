@@ -81,6 +81,9 @@ Sebelum menyimpan data, pengguna **wajib** membuat atau memilih sebuah "List" (d
 - "Barbershop Surabaya - Oktober 2026"
 - "Reseller Hijab Bandung"
 
+**Batasan Campaign (Tier Saat Ini):**
+> User Premium saat ini dapat membuat **maksimal 10 Campaign/List**. Batasan ini ditegakkan di level API dan ditampilkan secara jelas di UI. Di masa mendatang, jumlah Campaign yang diizinkan akan menjadi variabel diferensiasi antar tier harga (semakin tinggi tier, semakin banyak Campaign yang bisa dibuat). Untuk saat ini, satu tier Premium berlaku untuk semua.
+
 #### 3.5.2. Alur Kerja Pengguna (User Flow)
 
 ```
@@ -212,5 +215,7 @@ Semua endpoint di bawah ini **memvalidasi status Premium** sebelum memproses req
 *   ~~**Cloud CRM Storage:** Mengizinkan pengguna untuk menyimpan "Daftar Prospek" ke database Supabase agar tidak hilang saat berganti perangkat.~~ *(Selesai — lihat Fitur 3.5)*
 *   **Notifikasi & Pengingat Follow-Up:** Kirim email pengingat otomatis ke user untuk prospek yang sudah lama berstatus `follow_up`.
 *   **Import Prospek Eksternal:** Izinkan user mengunggah file Excel/CSV untuk mengimpor prospek dari sumber luar ke dalam sebuah List.
+*   **Tier Harga Lanjutan (Advanced Pricing Tiers):** Diferensiasi paket berdasarkan jumlah Campaign yang diizinkan (misalnya: Starter = 10, Pro = 50, Business = Unlimited). Batasan 10 Campaign saat ini sudah dirancang sebagai batas tier Starter.
 *   **AI Auto-Outreach:** Integrasi dengan OpenAI untuk mempersonalisasi *template* pesan penawaran berdasarkan nama dan kategori bisnis yang sedang diekstraksi.
 *   **Kolaborasi Tim:** Izinkan satu List dibagikan kepada beberapa anggota tim (multi-user access per List).
+

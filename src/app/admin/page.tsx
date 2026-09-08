@@ -23,7 +23,7 @@ export default function AdminPage() {
   const [newKeyLabel, setNewKeyLabel] = useState('');
   const [newKeyActive, setNewKeyActive] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('all');
+  const [filter, setFilter] = useState<'all' | 'inactive' | 'active'>('all');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -82,8 +82,8 @@ export default function AdminPage() {
 
   const logout = async () => { await supabase.auth.signOut(); router.push('/auth/login'); };
 
-  const filteredUsers = users.filter(u => filter === 'all' ? true : filter === 'pending' ? !u.is_approved : u.is_approved);
-  const pendingCount = users.filter(u => !u.is_approved).length;
+  const filteredUsers = users.filter(u => filter === 'all' ? true : filter === 'inactive' ? !u.is_approved : u.is_approved);
+  const inactiveCount = users.filter(u => !u.is_approved).length;
   const activeKey = apiKeys.find(k => k.is_active);
   const quotaExhausted = activeKey?.quota_exhausted;
 
@@ -99,7 +99,9 @@ export default function AdminPage() {
         </div>
         <div className="flex-none gap-4">
           <span className="text-sm text-base-content/60 hidden sm:inline-block">{currentUser?.email}</span>
-          <button onClick={() => router.push('/dashboard')} className="btn btn-sm btn-ghost">Dashboard</button>
+          <button onClick={() => router.push('/dashboard')} className="btn btn-sm btn-outline btn-primary" title="Buka tampilan user (scraper & campaigns)">
+            👤 Lihat sebagai User
+          </button>
           <button onClick={logout} className="btn btn-sm btn-ghost text-error">Logout</button>
         </div>
       </div>
@@ -123,14 +125,14 @@ export default function AdminPage() {
             <div className="stat-title">Total User</div>
             <div className="stat-value text-primary">{users.length}</div>
           </div>
-          <div className={`stat bg-base-100 border border-base-200 rounded-box shadow-sm ${pendingCount > 0 ? 'bg-warning/10 border-warning/30' : ''}`}>
-            <div className="stat-figure text-3xl">⏳</div>
-            <div className="stat-title">Menunggu Approval</div>
-            <div className={`stat-value ${pendingCount > 0 ? 'text-warning' : ''}`}>{pendingCount}</div>
+          <div className={`stat bg-base-100 border border-base-200 rounded-box shadow-sm ${inactiveCount > 0 ? 'bg-warning/10 border-warning/30' : ''}`}>
+            <div className="stat-figure text-3xl">🔒</div>
+            <div className="stat-title">Akun Nonaktif</div>
+            <div className={`stat-value ${inactiveCount > 0 ? 'text-warning' : ''}`}>{inactiveCount}</div>
           </div>
           <div className="stat bg-base-100 border border-base-200 rounded-box shadow-sm">
             <div className="stat-figure text-3xl">✅</div>
-            <div className="stat-title">User Aktif</div>
+            <div className="stat-title">Akun Aktif</div>
             <div className="stat-value text-success">{users.filter(u => u.is_approved).length}</div>
           </div>
           <div className="stat bg-base-100 border border-base-200 rounded-box shadow-sm">
@@ -145,7 +147,7 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="tabs tabs-bordered mb-6 border-b border-base-200">
           <a className={`tab tab-lg font-bold ${tab === 'users' ? 'tab-active !border-primary text-primary' : 'text-base-content/60'}`} onClick={() => setTab('users')}>
-            👥 Users {pendingCount > 0 && <div className="badge badge-warning badge-sm ml-2">{pendingCount}</div>}
+            👥 Users {inactiveCount > 0 && <div className="badge badge-warning badge-sm ml-2">{inactiveCount}</div>}
           </a>
           <a className={`tab tab-lg font-bold ${tab === 'apikeys' ? 'tab-active !border-primary text-primary' : 'text-base-content/60'}`} onClick={() => setTab('apikeys')}>
             🔑 API Keys
@@ -160,9 +162,9 @@ export default function AdminPage() {
           <div className="card bg-base-100 shadow-sm border border-base-200">
             {/* Filter */}
             <div className="p-4 border-b border-base-200 flex gap-2">
-              {(['all', 'pending', 'approved'] as const).map(f => (
+              {(['all', 'inactive', 'active'] as const).map(f => (
                 <button key={f} onClick={() => setFilter(f)} className={`btn btn-sm ${filter === f ? 'btn-primary' : 'btn-ghost'}`}>
-                  {f === 'all' ? 'Semua' : f === 'pending' ? `Pending (${pendingCount})` : 'Disetujui'}
+                  {f === 'all' ? 'Semua' : f === 'inactive' ? `Nonaktif (${inactiveCount})` : 'Aktif'}
                 </button>
               ))}
             </div>
@@ -198,16 +200,16 @@ export default function AdminPage() {
                       </td>
                       <td>
                         <div className={`badge ${u.is_approved ? 'badge-success badge-outline' : 'badge-warning badge-outline'} font-semibold`}>
-                          {u.is_approved ? 'Aktif' : 'Pending'}
+                          {u.is_approved ? 'Aktif' : 'Nonaktif'}
                         </div>
                       </td>
                       <td>
                         <div className="flex gap-2">
                           {!u.is_approved && (
-                            <button onClick={() => updateUser(u.id, { is_approved: true })} className="btn btn-xs btn-success text-white">Approve</button>
+                            <button onClick={() => updateUser(u.id, { is_approved: true })} className="btn btn-xs btn-success text-white">Activate</button>
                           )}
                           {u.is_approved && (
-                            <button onClick={() => updateUser(u.id, { is_approved: false })} className="btn btn-xs btn-warning text-white">Suspend</button>
+                            <button onClick={() => updateUser(u.id, { is_approved: false })} className="btn btn-xs btn-warning text-white">Deactivate</button>
                           )}
                           <button onClick={() => deleteUser(u.id, u.email)} className="btn btn-xs btn-outline btn-error">Hapus</button>
                         </div>
