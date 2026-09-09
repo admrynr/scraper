@@ -225,8 +225,8 @@ export default function DashboardPage() {
   const purchasedCredits = profile?.purchased_credits ?? 0;
   const totalCredits = profile?.role === 'super_admin' ? 'Unlimited' : (effectiveDailyCredits + purchasedCredits);
 
-  const selStyle = 'select select-bordered w-full';
-  const inpStyle = 'input input-bordered w-full';
+  const selStyle = 'select select-bordered w-full bg-base-100 text-base-content';
+  const inpStyle = 'input input-bordered w-full bg-base-100 text-base-content';
 
   return (
     <div className="min-h-screen bg-base-200 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
@@ -395,7 +395,7 @@ export default function DashboardPage() {
               <div className="relative">
                 <button onClick={() => setShowExportMenu(p => p === 'all' ? null : 'all')} className="btn btn-sm btn-success text-white">Export Semua ({processedResults.length}) ▾</button>
                 {showExportMenu === 'all' && (
-                  <ul className="menu bg-base-100 border border-base-200 rounded-box shadow-md absolute right-0 mt-1 w-40 z-10 p-1">
+                  <ul className="menu bg-base-100 border border-base-200 rounded-box shadow-xl absolute right-0 mt-1 w-40 z-50 p-1">
                     <li><a onClick={() => handlePremiumAction('export', () => { exportExcel(processedResults); setShowExportMenu(null); })}>📊 Excel (.xlsx)</a></li>
                     <li><a onClick={() => handlePremiumAction('export', () => { exportCSV(processedResults); setShowExportMenu(null); })}>📄 CSV (.csv)</a></li>
                   </ul>
@@ -404,7 +404,7 @@ export default function DashboardPage() {
               <div className="relative">
                 <button onClick={() => setShowExportMenu(p => p === 'selected' ? null : 'selected')} disabled={selectedIndices.size === 0} className="btn btn-sm btn-primary">Export Dipilih ({selectedIndices.size}) ▾</button>
                 {showExportMenu === 'selected' && selectedIndices.size > 0 && (
-                  <ul className="menu bg-base-100 border border-base-200 rounded-box shadow-md absolute right-0 mt-1 w-40 z-10 p-1">
+                  <ul className="menu bg-base-100 border border-base-200 rounded-box shadow-xl absolute right-0 mt-1 w-40 z-50 p-1">
                     <li><a onClick={() => handlePremiumAction('export', () => { exportExcel(selectedData); setShowExportMenu(null); })}>📊 Excel (.xlsx)</a></li>
                     <li><a onClick={() => handlePremiumAction('export', () => { exportCSV(selectedData); setShowExportMenu(null); })}>📄 CSV (.csv)</a></li>
                   </ul>

@@ -123,15 +123,89 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Fix mobile browser overriding text color on inputs in dark mode */
-input, textarea, select {
+/* Ensure inputs and textareas have solid opaque backgrounds and theme text */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea {
   color: var(--base-content) !important;
-  background-color: transparent;
+  background-color: var(--base-100) !important;
 }
-[data-theme="dark"] input, 
-[data-theme="dark"] textarea, 
-[data-theme="dark"] select {
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]), 
+[data-theme="dark"] textarea {
   color: #f9fafb !important;
+  background-color: #1e293b !important;
+}
+
+/* ==========================================================================
+   DROPDOWN & SELECT FIXES:
+   Override daisyUI v5's experimental 'base-select' appearance feature.
+   Turbopack cannot parse ::picker(select) pseudo-element selectors,
+   so we force appearance:auto (native OS select) on all select elements.
+   This prevents the transparent floating popover / overlapping text bug.
+   ========================================================================== */
+
+/* Override daisyUI v5 base-select: force native appearance on all selects */
+select,
+.select > select,
+.select select {
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+  -moz-appearance: auto !important;
+}
+
+/* Give .select wrapper and plain select solid backgrounds */
+select,
+.select {
+  background-color: var(--base-100) !important;
+  color: var(--base-content) !important;
+  border: 1px solid var(--base-300) !important;
+  border-radius: var(--radius-btn, 0.5rem) !important;
+}
+
+select:disabled,
+.select:disabled,
+.select[disabled] {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  background-color: var(--base-200) !important;
+}
+
+select:focus,
+.select:focus,
+.select:focus-within {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Ensure options have clean solid backgrounds and readable text */
+option,
+select option,
+.select option {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  padding: 8px 12px !important;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] select,
+[data-theme="dark"] .select {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] .select:disabled,
+[data-theme="dark"] .select[disabled] {
+  background-color: #0f172a !important;
+}
+
+[data-theme="dark"] option,
+[data-theme="dark"] select option,
+[data-theme="dark"] .select option {
+  background-color: #1e293b !important;
+  background: #1e293b !important;
+  color: #f8fafc !important;
 }
 
 /* Ensure text elements always respect dark mode on mobile */

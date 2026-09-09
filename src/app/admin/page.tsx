@@ -192,7 +192,7 @@ export default function AdminPage() {
                       </td>
                       <td className="text-base-content/70">{u.phone || '—'}</td>
                       <td>
-                        <select value={u.role} onChange={e => updateUser(u.id, { role: e.target.value })} className="select select-bordered select-sm">
+                        <select value={u.role} onChange={e => updateUser(u.id, { role: e.target.value })} className="select select-bordered select-sm bg-base-100 text-base-content">
                           <option value="user">User</option>
                           <option value="admin">Admin</option>
                           <option value="super_admin">Super Admin</option>

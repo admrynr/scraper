@@ -15,6 +15,12 @@ export default function ListsPage() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
 
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [creating, setCreating] = useState(false);
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth/login'); return; }
@@ -49,6 +55,32 @@ export default function ListsPage() {
       setLoading(false);
     }
   };
+
+  const createList = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    setCreating(true);
+    try {
+      const res = await fetch('/next-api/lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim(), description: newDesc.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setLists(prev => [data, ...prev]);
+      setShowModal(false);
+      setNewName('');
+      setNewDesc('');
+      toast.success(`Campaign "${data.name}" berhasil dibuat!`);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const closeModal = () => { setShowModal(false); setNewName(''); setNewDesc(''); };
 
   const deleteList = async (id: string, name: string) => {
     if (!confirm(`Apakah Anda yakin ingin menghapus Campaign "${name}" beserta semua isinya?`)) return;
@@ -102,13 +134,28 @@ export default function ListsPage() {
         <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-bold">Daftar Campaign Anda</h2>
-            <Link href="/dashboard" className="btn btn-sm btn-primary">+ Scrape Baru</Link>
+            <div className="flex gap-2">
+              <Link href="/dashboard" className="btn btn-sm btn-ghost border border-base-300">
+                🔍 Scrape Baru
+              </Link>
+              <button
+                onClick={() => setShowModal(true)}
+                disabled={lists.length >= 10}
+                className="btn btn-sm btn-primary"
+              >
+                + Buat List Baru
+              </button>
+            </div>
           </div>
 
           {lists.length === 0 ? (
-            <div className="text-center py-10 opacity-60">
-              <p>Belum ada campaign yang dibuat.</p>
-              <p className="text-sm mt-2">Mulai lakukan pencarian di Scraper dan pilih "Simpan ke List".</p>
+            <div className="text-center py-16 opacity-60">
+              <div className="text-5xl mb-4">📋</div>
+              <p className="font-semibold text-lg">Belum ada campaign.</p>
+              <p className="text-sm mt-2">Buat list baru, lalu simpan hasil scrape ke dalamnya.</p>
+              <button onClick={() => setShowModal(true)} className="btn btn-primary btn-sm mt-4">
+                + Buat List Pertama
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -132,6 +179,53 @@ export default function ListsPage() {
         </div>
 
       </div>
+
+      {/* Modal Buat List */}
+      {showModal && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Buat Campaign / List Baru</h3>
+            <form onSubmit={createList} className="flex flex-col gap-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold">Nama Campaign *</span>
+                </label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  placeholder="e.g. Prospek Barbershop Jakarta"
+                  className="input input-bordered w-full"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold">Deskripsi <span className="text-base-content/40 font-normal">(Opsional)</span></span>
+                </label>
+                <textarea
+                  value={newDesc}
+                  onChange={e => setNewDesc(e.target.value)}
+                  placeholder="Keterangan campaign ini..."
+                  className="textarea textarea-bordered w-full"
+                  rows={3}
+                />
+              </div>
+              <div className="modal-action mt-2">
+                <button type="button" onClick={closeModal} className="btn btn-ghost">
+                  Batal
+                </button>
+                <button type="submit" disabled={creating || !newName.trim()} className="btn btn-primary">
+                  {creating ? <span className="loading loading-spinner loading-sm"></span> : 'Buat Campaign'}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div className="modal-backdrop" onClick={closeModal}></div>
+        </div>
+      )}
     </div>
   );
 }
+

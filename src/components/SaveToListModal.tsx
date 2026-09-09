@@ -149,7 +149,7 @@ export default function SaveToListModal({ isOpen, onClose, selectedData }: SaveT
                   <div className="alert alert-warning text-sm py-2">Anda belum memiliki campaign. Silakan buat baru.</div>
                 ) : (
                   <select 
-                    className="select select-bordered w-full"
+                    className="select select-bordered w-full bg-base-100 text-base-content"
                     value={selectedListId}
                     onChange={(e) => setSelectedListId(e.target.value)}
                     required

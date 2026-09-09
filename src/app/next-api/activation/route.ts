@@ -60,8 +60,44 @@ export async function POST(request: NextRequest) {
 
   const pricing = PRICING[type];
 
-  // Buat unique order ID
+  // ── Cek apakah ada pending request dengan snap_token yang masih valid ──
+  const { data: existingReq } = await adminClient
+    .from('activation_requests')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('type', type)
+    .eq('status', 'pending')
+    .not('snap_token', 'is', null)
+    .gt('snap_token_expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (existingReq?.snap_token) {
+    // Reuse token yang masih valid — user hanya tutup popup sebelumnya
+    console.log('Reusing existing snap token for order:', existingReq.midtrans_order_id);
+    return NextResponse.json({
+      snapToken: existingReq.snap_token,
+      orderId: existingReq.midtrans_order_id,
+      amount: existingReq.amount,
+      credits: existingReq.credits,
+      resumed: true,
+    });
+  }
+
+  // ── Hapus pending lama yang sudah expired (bersihkan DB) ──
+  await adminClient
+    .from('activation_requests')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('type', type)
+    .eq('status', 'pending');
+
+  // ── Buat transaksi baru ──
   const orderId = `PROSPEKTO-${type.toUpperCase()}-${user.id.slice(0, 8).toUpperCase()}-${Date.now()}`;
+
+  // Midtrans snap token berlaku 24 jam
+  const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
   // Simpan activation request ke DB
   const { data: activationReq, error: insertError } = await adminClient
@@ -73,6 +109,7 @@ export async function POST(request: NextRequest) {
       credits: pricing.credits,
       status: 'pending',
       midtrans_order_id: orderId,
+      snap_token_expires_at: tokenExpiresAt,
     })
     .select()
     .single();
@@ -133,6 +170,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Simpan snap_token ke DB
+    await adminClient
+      .from('activation_requests')
+      .update({ snap_token: transaction.token })
+      .eq('id', activationReq.id);
+
     return NextResponse.json({
       snapToken: transaction.token,
       orderId,
@@ -146,6 +189,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Gagal menghubungi payment gateway.' }, { status: 502 });
   }
 }
+
 
 // GET /next-api/activation?order_id=xxx — cek status transaksi
 export async function GET(request: NextRequest) {

@@ -104,3 +104,8 @@ CREATE POLICY "Users can update their own saved prospects"
 CREATE POLICY "Users can delete their own saved prospects" 
     ON public.saved_prospects FOR DELETE 
     USING (auth.uid() = user_id);
+
+-- Grant Data API access (PostgREST) for authenticated users
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON public.prospect_lists TO authenticated;
+GRANT ALL ON public.saved_prospects TO authenticated;

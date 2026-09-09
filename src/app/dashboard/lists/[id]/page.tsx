@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import ThemeToggle from '@/components/ThemeToggle';
 import toast from 'react-hot-toast';
-import { createClient } from '@/lib/supabase/client';
 import * as XLSX from 'xlsx';
 import { ALL_VARIABLES } from '@/components/WaTemplateEditor';
 
@@ -14,7 +13,6 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   const unwrappedParams = use(params);
   const listId = unwrappedParams.id;
   const router = useRouter();
-  const supabase = createClient();
   
   const [listData, setListData] = useState<any>(null);
   const [prospects, setProspects] = useState<any[]>([]);
@@ -30,33 +28,24 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { router.push('/auth/login'); return; }
-      fetchData();
-    });
+    fetchData();
   }, [listId, statusFilter]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Get list metadata (could use an API, or just fetch via Supabase directly)
-      const { data: listMeta, error: listError } = await supabase
-        .from('prospect_lists')
-        .select('*')
-        .eq('id', listId)
-        .single();
-        
-      if (listError) throw listError;
-      setListData(listMeta);
+      // Get list metadata via API (avoid direct client query / permission denied)
+      const [listRes, prospectsRes] = await Promise.all([
+        fetch(`/next-api/lists/${listId}`),
+        fetch(`/next-api/lists/${listId}/prospects${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`),
+      ]);
 
-      // Get prospects
-      let url = `/next-api/lists/${listId}/prospects`;
-      if (statusFilter !== 'all') url += `?status=${statusFilter}`;
-      
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setProspects(data);
+      if (listRes.status === 401) { router.push('/auth/login'); return; }
+      if (!listRes.ok) { const e = await listRes.json(); throw new Error(e.error); }
+      setListData(await listRes.json());
+
+      if (!prospectsRes.ok) { const e = await prospectsRes.json(); throw new Error(e.error); }
+      setProspects(await prospectsRes.json());
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -170,7 +159,7 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
           <div className="p-4 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-base-200/30">
             <div className="flex gap-2 items-center w-full md:w-auto">
               <select 
-                className="select select-sm select-bordered" 
+                className="select select-sm select-bordered bg-base-100 text-base-content" 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
