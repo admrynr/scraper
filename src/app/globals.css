@@ -137,75 +137,52 @@ textarea {
 
 /* ==========================================================================
    DROPDOWN & SELECT FIXES:
-   Override daisyUI v5's experimental 'base-select' appearance feature.
-   Turbopack cannot parse ::picker(select) pseudo-element selectors,
-   so we force appearance:auto (native OS select) on all select elements.
-   This prevents the transparent floating popover / overlapping text bug.
+   daisyUI v5.7.32 handles styled dropdowns natively via its .select component.
+   These overrides ensure solid opaque backgrounds to prevent the
+   "transparent floating popover / overlapping text" bug on Chromium.
+   Do NOT force appearance:auto — that would revert to native OS look.
    ========================================================================== */
 
-/* Override daisyUI v5 base-select: force native appearance on all selects */
-select,
-.select > select,
-.select select {
-  appearance: auto !important;
-  -webkit-appearance: auto !important;
-  -moz-appearance: auto !important;
-}
-
-/* Give .select wrapper and plain select solid backgrounds */
-select,
+/* Ensure .select wrapper always has a solid opaque background */
 .select {
-  background-color: var(--base-100) !important;
-  color: var(--base-content) !important;
-  border: 1px solid var(--base-300) !important;
-  border-radius: var(--radius-btn, 0.5rem) !important;
+  background-color: var(--color-base-100, var(--base-100)) !important;
+  color: var(--color-base-content, var(--base-content)) !important;
 }
 
-select:disabled,
-.select:disabled,
-.select[disabled] {
-  opacity: 0.6 !important;
-  cursor: not-allowed !important;
-  background-color: var(--base-200) !important;
+/* Fallback for plain <select> tags not using .select class */
+select:not(.select):not([class*="select"]) {
+  background-color: var(--color-base-100, var(--base-100));
+  color: var(--color-base-content, var(--base-content));
+  border: 1px solid var(--color-base-300, var(--base-300));
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
 }
 
-select:focus,
-.select:focus,
-.select:focus-within {
-  outline: 2px solid var(--primary) !important;
-  outline-offset: 2px !important;
-}
-
-/* Ensure options have clean solid backgrounds and readable text */
+/* Ensure option elements always have solid backgrounds (prevents overlapping text) */
 option,
 select option,
 .select option {
-  background-color: #ffffff !important;
-  background: #ffffff !important;
-  color: #0f172a !important;
-  padding: 8px 12px !important;
+  background-color: var(--color-base-100, #ffffff);
+  color: var(--color-base-content, #0f172a);
 }
 
-/* Dark theme overrides */
-[data-theme="dark"] select,
-[data-theme="dark"] .select {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-[data-theme="dark"] select:disabled,
-[data-theme="dark"] .select:disabled,
-[data-theme="dark"] .select[disabled] {
-  background-color: #0f172a !important;
-}
-
+/* Dark theme: ensure solid dark backgrounds on dropdown options */
 [data-theme="dark"] option,
 [data-theme="dark"] select option,
 [data-theme="dark"] .select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .select {
   background-color: #1e293b !important;
-  background: #1e293b !important;
   color: #f8fafc !important;
+}
+
+[data-theme="dark"] select:not(.select):not([class*="select"]) {
+  background-color: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
 }
 
 /* Ensure text elements always respect dark mode on mobile */
