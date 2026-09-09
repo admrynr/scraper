@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   const adminClient = createAdminClient();
   const { data: profile } = await adminClient
     .from('profiles')
-    .select('id, email, full_name, is_activated, purchased_credits')
+    .select('id, email, full_name, phone, is_activated, purchased_credits')
     .eq('id', user.id)
     .single();
 
@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
       customer_details: {
         first_name: profile.full_name || 'User',
         email: profile.email,
+        ...(profile.phone ? { phone: profile.phone } : {}),
       },
       callbacks: {
         finish: `${process.env.NEXT_PUBLIC_SITE_URL}/upgrade/success?order_id=${orderId}`,
