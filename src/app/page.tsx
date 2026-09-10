@@ -153,9 +153,9 @@ export default async function Home() {
         <section className="py-20 bg-base-200 border-y border-base-300">
           <div className="max-w-5xl mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-4 max-w-3xl mx-auto leading-snug">
-              Setiap hari yang berlalu,<br />kompetitor Anda sudah satu langkah lebih dekat ke klien itu.
+              Setiap hari yang berlalu,<br />kompetitor Anda sudah satu langkah lebih dekat ke klien.
             </h2>
-            <p className="text-base-content/60 text-base mb-12">Ini bukan soal siapa yang paling keras bekerja. Ini soal siapa yang bergerak lebih cepat.</p>
+            <p className="text-base-content/60 text-base mb-12">Ini bukan soal siapa yang paling keras bekerja. Ini soal siapa yang gerak lebih cepat.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -166,7 +166,7 @@ export default async function Home() {
                 },
                 {
                   icon: '⏳',
-                  title: 'Waktu kerja habis di hal yang salah',
+                  title: 'Waktu habis di pekerjaan yang repetitif',
                   body: 'Scrolling Google Maps berjam-jam, copy-paste nomor satu per satu — sementara target closing bulanan terus menghitung mundur.',
                 },
                 {
@@ -208,7 +208,7 @@ export default async function Home() {
               },
               {
                 icon: '💬',
-                title: 'Hubungi via WhatsApp, satu klik cukup',
+                title: 'Hubungi via WhatsApp, cukup satu klik',
                 body: 'Template pesan sudah terisi otomatis — nama bisnis, detail penawaran, semua siap. Klik "Chat WA", langsung masuk ke percakapan. Tidak perlu mengetik ulang.',
                 accent: 'indigo',
               },
