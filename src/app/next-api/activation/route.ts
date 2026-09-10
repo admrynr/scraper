@@ -27,6 +27,13 @@ function getMidtransSnap() {
   });
 }
 
+function getMidtransCore() {
+  return new Midtrans.CoreApi({
+    isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
+    serverKey: process.env.MIDTRANS_SERVER_KEY,
+  });
+}
+
 // POST /next-api/activation — buat transaksi Midtrans
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -60,7 +67,10 @@ export async function POST(request: NextRequest) {
 
   const pricing = PRICING[type];
 
-  // ── Cek apakah ada pending request dengan snap_token yang masih valid ──
+  // ── Cek apakah ada pending request dengan snap_token yang dibuat < 5 menit lalu ──
+  // Window 5 menit: cukup untuk retry langsung setelah tutup popup, tapi tidak reuse
+  // jika user navigasi ke halaman lain (biasanya lebih dari beberapa menit)
+  const reuseWindow = new Date(Date.now() - 5 * 60 * 1000).toISOString();
   const { data: existingReq } = await adminClient
     .from('activation_requests')
     .select('*')
@@ -68,13 +78,13 @@ export async function POST(request: NextRequest) {
     .eq('type', type)
     .eq('status', 'pending')
     .not('snap_token', 'is', null)
-    .gt('snap_token_expires_at', new Date().toISOString())
+    .gt('created_at', reuseWindow)
     .order('created_at', { ascending: false })
     .limit(1)
     .single();
 
   if (existingReq?.snap_token) {
-    // Reuse token yang masih valid — user hanya tutup popup sebelumnya
+    // Reuse token yang masih fresh (< 5 menit) — user hanya tutup popup sebelumnya
     console.log('Reusing existing snap token for order:', existingReq.midtrans_order_id);
     return NextResponse.json({
       snapToken: existingReq.snap_token,
@@ -96,8 +106,8 @@ export async function POST(request: NextRequest) {
   // ── Buat transaksi baru ──
   const orderId = `PROSPEKTO-${type.toUpperCase()}-${user.id.slice(0, 8).toUpperCase()}-${Date.now()}`;
 
-  // Midtrans snap token berlaku 24 jam
-  const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  // Midtrans snap token berlaku 24 jam — kita simpan 23 jam sebagai safety margin
+  const tokenExpiresAt = new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString();
 
   // Simpan activation request ke DB
   const { data: activationReq, error: insertError } = await adminClient
@@ -191,7 +201,8 @@ export async function POST(request: NextRequest) {
 }
 
 
-// GET /next-api/activation?order_id=xxx — cek status transaksi
+// GET /next-api/activation?order_id=xxx[&include_expiry=1] — cek status transaksi
+// include_expiry=1: panggil Midtrans status API untuk dapat expiry_time real (per payment method)
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -216,5 +227,56 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Transaksi tidak ditemukan.' }, { status: 404 });
   }
 
-  return NextResponse.json(req);
+  // Jika include_expiry=1 dan status masih pending, ambil expiry time real dari Midtrans
+  // (hanya dipanggil sekali dari frontend saat pertama load, bukan tiap poll)
+  let midtransExpiryAt: string | null = null;
+  const includeExpiry = request.nextUrl.searchParams.get('include_expiry') === '1';
+  if (includeExpiry && req.status === 'pending') {
+    try {
+      const core = getMidtransCore();
+      const mtStatus = await core.transaction.status(orderId);
+      if (mtStatus?.expiry_time) {
+        // Midtrans returns "YYYY-MM-DD HH:MM:SS" dalam WIB (UTC+7)
+        midtransExpiryAt = new Date(
+          mtStatus.expiry_time.replace(' ', 'T') + '+07:00'
+        ).toISOString();
+      }
+    } catch {
+      // Jika gagal (belum pilih metode / Midtrans error), biarkan null
+    }
+  }
+
+  return NextResponse.json({ ...req, midtrans_expiry_at: midtransExpiryAt });
 }
+
+// DELETE /next-api/activation?type=xxx — hapus pending record yang tokennya expired/stale
+// Dipanggil dari frontend saat onError di Snap popup (misal: "transaction has expired")
+export async function DELETE(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const type = request.nextUrl.searchParams.get('type');
+
+  const adminClient = createAdminClient();
+  const query = adminClient
+    .from('activation_requests')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('status', 'pending');
+
+  // Jika type disertakan, hanya hapus untuk tipe itu
+  if (type && ['activation', 'topup'].includes(type)) {
+    query.eq('type', type);
+  }
+
+  const { error } = await query;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+

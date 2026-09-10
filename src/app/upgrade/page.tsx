@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/Logo';
@@ -16,7 +16,10 @@ export default function UpgradePage() {
   const supabase = createClient();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState<null | 'activation' | 'topup'>(null);
-  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ type: 'ok' | 'err' | 'info'; text: string } | null>(null);
+  const [pendingType, setPendingType] = useState<null | 'activation' | 'topup'>(null);
+  // useRef agar onClose callback (stale closure) selalu baca nilai terkini
+  const pendingTypeRef = useRef<null | 'activation' | 'topup'>(null);
 
   useEffect(() => {
     // Load Midtrans Snap.js
@@ -53,19 +56,45 @@ export default function UpgradePage() {
 
       // Buka Midtrans Snap popup
       window.snap.pay(data.snapToken, {
-        onSuccess: (result: any) => {
+        onSuccess: () => {
+          pendingTypeRef.current = null;
+          setPendingType(null);
           setMsg({ type: 'ok', text: '🎉 Pembayaran berhasil! Akun Anda sedang diperbarui...' });
-          // Refresh profile setelah beberapa detik (webhook butuh waktu)
           setTimeout(() => router.push('/dashboard'), 3000);
         },
-        onPending: (result: any) => {
-          setMsg({ type: 'ok', text: '⏳ Pembayaran dalam proses. Kami akan memproses setelah konfirmasi.' });
+        onPending: () => {
+          // Terjadi saat user sudah pilih metode (VA/transfer) lalu tutup popup
+          // Transaksi SUDAH ada di Midtrans, user perlu selesaikan pembayaran
+          pendingTypeRef.current = type; // update ref SEBELUM onClose bisa terpanggil
+          setPendingType(type);
+          setMsg({
+            type: 'info',
+            text: '⏳ Instruksi pembayaran sudah dibuat. Selesaikan pembayaran sesuai metode yang dipilih, atau klik "Lanjutkan Pembayaran" untuk melihat instruksi kembali.',
+          });
         },
-        onError: (result: any) => {
-          setMsg({ type: 'err', text: '❌ Pembayaran gagal. Silakan coba lagi.' });
+        onError: () => {
+          // Hapus token stale di DB (misal: expired di Midtrans)
+          // Fire-and-forget — tidak perlu await
+          fetch(`/next-api/activation?type=${type}`, { method: 'DELETE' }).catch(() => {});
+          pendingTypeRef.current = null;
+          setPendingType(null);
+          setMsg({ type: 'err', text: '❌ Transaksi gagal atau sudah expired. Silakan klik bayar lagi untuk membuat transaksi baru.' });
         },
         onClose: () => {
-          setMsg({ type: 'err', text: 'Popup ditutup sebelum pembayaran selesai.' });
+          // Bisa terjadi karena:
+          // 1. User tutup sebelum pilih metode → tidak ada pendingType
+          // 2. Transaksi expired (Midtrans tidak trigger onError untuk kasus ini, melainkan onClose)
+          // Gunakan ref (bukan state) karena closure ini bisa capture nilai lama (stale closure)
+          if (!pendingTypeRef.current) {
+            fetch(`/next-api/activation?type=${type}`, { method: 'DELETE' }).catch(() => {});
+            setMsg({ type: 'info', text: '💡 Pembayaran dibatalkan. Klik tombol bayar lagi untuk memulai kembali.' });
+          } else {
+            // User sudah pilih metode VA/transfer tapi tutup popup → ingatkan untuk selesaikan
+            setMsg({
+              type: 'info',
+              text: '⏳ Instruksi pembayaran sudah dibuat. Selesaikan pembayaran sesuai metode yang dipilih, atau klik "Lanjutkan Pembayaran" untuk melihat instruksi kembali.',
+            });
+          }
         },
       });
     } catch (err: any) {
@@ -93,8 +122,23 @@ export default function UpgradePage() {
 
       {/* Notification */}
       {msg && (
-        <div className={`w-full max-w-4xl alert ${msg.type === 'ok' ? 'alert-success' : 'alert-error'} mb-6 shadow-sm rounded-xl`}>
-          <span>{msg.text}</span>
+        <div className={`w-full max-w-4xl alert ${
+          msg.type === 'ok' ? 'alert-success' :
+          msg.type === 'info' ? 'alert-warning' :
+          'alert-error'
+        } mb-6 shadow-sm rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-3`}>
+          <span className="flex-1">{msg.text}</span>
+          {pendingType && (
+            <button
+              onClick={() => handlePayment(pendingType)}
+              disabled={loading !== null}
+              className="btn btn-sm btn-warning shrink-0"
+            >
+              {loading === pendingType
+                ? <span className="loading loading-spinner loading-xs"></span>
+                : '↩ Lanjutkan Pembayaran'}
+            </button>
+          )}
         </div>
       )}
 
