@@ -29,8 +29,8 @@ Aplikasi memiliki sistem akses yang aman dan tertutup. Setiap pengguna wajib men
 *   **Role User (Premium / Activated):**
     *   Pengguna yang telah membayar aktivasi satu kali (Rp 50.000) via Midtrans.
     *   Mendapatkan bonus awal 50 *credits*.
-    *   Akses semua fitur terbuka (Export, Chat WhatsApp, pilihan *Max Rows* hingga 1000 baris).
-    *   Bisa melakukan *top-up credit* (Rp 50.000 = 70 *credits*). 1 *credit* = ekstraksi 100 baris data.
+    *   Akses semua fitur terbuka (Export Excel/CSV, Chat WhatsApp langsung, pilihan *Max Rows* hingga 120 baris).
+    *   Bisa melakukan *top-up credit* (Rp 50.000 = 60 *credits*). 1 *credit* = ekstraksi hingga 20 baris data (1 panggilan SerpAPI Google Maps).
     *   **Akses penuh ke fitur Dashboard & Campaign/Lists** untuk menyimpan dan mengelola prospek secara permanen di cloud.
 *   **Role Admin:**
     *   Memiliki akses ke halaman **Admin Panel**.
@@ -138,6 +138,51 @@ Sistem mendeteksi duplikat berdasarkan kombinasi `place_id` (ID unik dari Google
 
 ---
 
+### 3.6. 🆕 Sistem Kredit, Konsumsi Baris Data & Kebijakan Monetisasi
+
+Sistem monetisasi aplikasi menggunakan kombinasi **Aktivasi Lisensi Sekali Bayar (*Lifetime License*)** dan **Sistem Kredit Berbasis Pemakaian (*Usage-Based Credits*)**.
+
+#### 3.6.1. Rasio Konversi & Batasan Maksimal Google Maps (120 Baris)
+*   **1 Kredit = 1 Panggilan API SerpAPI Google Maps = 20 Baris Data Prospek.**
+*   Google Maps API dari SerpAPI menyajikan data per halaman (*page*) dengan ukuran tepat 20 *local results*.
+*   **Limitasi Alami Google Maps (Maksimal 120 Baris / 6 Kredit):**
+    Secara teknis, Google Maps membatasi hasil pencarian untuk satu kata kunci dan wilayah geografis hingga maksimal **~120 tempat (6 halaman x 20 baris)**. Jika pencarian dipaksa melebihi 120 baris (`start > 100`), Google Maps akan mengulang data yang sama (*duplikasi*), menghentikan pagination, atau memperlebar radius secara liar ke luar wilayah yang dituju. Oleh karena itu, sistem membatasi opsi *Max Rows* maksimal **120 baris (6 kredit)** per satu kali eksekusi scraping demi efisiensi biaya kredit pengguna dan akurasi data.
+*   **Tabel Simulasi Konsumsi Kredit (Murni Kelipatan 20):**
+    | Permintaan Baris (*Max Rows*) | Panggilan API (*Pages*) | Kredit yang Dibutuhkan | Keterangan |
+    |---|---|---|---|
+    | **20 baris** | 1 call | **1 kredit** | 1 halaman data |
+    | **40 baris** | 2 calls | **2 kredit** | 2 halaman data |
+    | **60 baris** | 3 calls | **3 kredit** | 3 halaman data |
+    | **80 baris** | 4 calls | **4 kredit** | 4 halaman data |
+    | **100 baris** | 5 calls | **5 kredit** | 5 halaman data |
+    | **120 baris** | 6 calls | **6 kredit** | **Batas Maksimal Ekstraksi Google Maps** |
+
+#### 3.6.2. Struktur Paket Pembelian (Via Midtrans)
+
+1.  **Paket Aktivasi Akun (Akses Penuh Seumur Hidup):**
+    *   **Harga:** Rp 50.000 (sekali bayar seumur hidup / *lifetime*).
+    *   **Status Akun:** `is_activated = true`.
+    *   **Benefit Terbuka:**
+        *   Membuka fitur Export ke Excel (.xlsx) dan CSV.
+        *   Membuka fitur Direct WhatsApp Chat dengan *template* kustom.
+        *   Membuka opsi *Max Rows* hingga 120 baris (6 kredit).
+        *   Membuka akses penuh ke **Dashboard & Campaign/Lists** (maksimal 10 Campaign aktif).
+        *   Menghilangkan limitasi 5x scraping gratis harian.
+    *   **Bonus Awal:** **50 Kredit Gratis** (setara ekstraksi hingga 1.000 data prospek).
+
+2.  **Paket Top-Up Kredit:**
+    *   **Harga:** Rp 50.000 per paket.
+    *   **Perolehan Kredit:** **60 Kredit** (setara ekstraksi hingga 1.200 baris data prospek).
+    *   **Masa Berlaku:** Tidak memiliki batas masa kedaluwarsa (*never expires*), saldo terakumulasi.
+    *   **Prasyarat:** Hanya dapat dibeli oleh pengguna yang sudah berstatus Aktif (*Activated*).
+
+#### 3.6.3. Proteksi Pemotongan Kredit yang Adil (*Fair Usage Deduction*)
+*   **Pre-Flight Balance Check:** Sebelum proses scraping dijalankan ke pihak ketiga, sistem memeriksa saldo `purchased_credits`. Jika saldo kurang dari kebutuhan halaman target, request langsung ditolak dengan kode `INSUFFICIENT_CREDITS` tanpa memotong saldo sama sekali.
+*   **Post-Execution Deduction:** Pemotongan saldo kredit dilakukan **hanya setelah halaman data berhasil diambil (`pagesProcessed`)**.
+*   **Perlindungan Hasil Parsial:** Jika terjadi timeout jaringan atau kuota kunci habis di tengah jalan saat memproses data (misal meminta 120 baris / 6 kredit tapi terputus di halaman ke-3), sistem hanya memotong **3 kredit** sesuai jumlah data riil yang berhasil diserahkan ke pengguna.
+
+---
+
 ## 4. Spesifikasi Teknis & Infrastruktur Pendukung
 
 Aplikasi dibangun menggunakan teknologi modern yang memastikan performa tinggi dan pengelolaan yang minim (*low-maintenance*).
@@ -207,6 +252,43 @@ Semua endpoint di bawah ini **memvalidasi status Premium** sebelum memproses req
 | `POST` | `/next-api/lists/[id]/prospects` | Simpan satu atau lebih prospek ke List (dengan logika skip duplikat) |
 | `PATCH` | `/next-api/lists/[id]/prospects/[pid]` | Update status/label atau catatan satu prospek |
 | `DELETE` | `/next-api/lists/[id]/prospects` | Hapus satu atau beberapa prospek dari List (body: array of prospect `id`) |
+
+---
+
+### 4.3. 🆕 Arsitektur Smart Caching (Search Cache) & Efisiensi Kuota API
+
+Untuk menjaga efisiensi biaya operasional (kuota SerpAPI) dan memberikan pengalaman pengguna yang secepat kilat (*sub-second latency*), sistem dilengkapi mekanisme *multi-level caching* berbasis database Supabase.
+
+#### 4.3.1. Latar Belakang & Masalah yang Dipecahkan
+1.  **Latensi Jaringan Eksternal:** Setiap panggilan SerpAPI membutuhkan waktu 3–8 detik. Menarik 5 halaman (100 baris) tanpa cache berisiko melampaui batas *timeout* serverless Vercel (10 detik pada tier Hobby / 60 detik pada tier Pro).
+2.  **Efisiensi Biaya Kuota API:** Pencarian untuk kata kunci populer di kota-kota besar (misalnya *"Cafe di Tebet Jakarta Selatan"*) sering dilakukan berulang kali oleh berbagai pengguna yang berbeda.
+3.  **Ketahanan Terhadap API Limit:** Ketika kuota SerpAPI mendekati batas harian/bulanan, *cache* menjaga ketersediaan layanan untuk pencarian data yang sudah pernah diindeks.
+
+#### 4.3.2. Skema Tabel `search_cache`
+
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `id` | `bigint` (PK) | Auto-increment primary key |
+| `keyword` | `text` | Kunci pencarian ter-normalisasi (*lowercase*) |
+| `page_number` | `integer` | Nomor halaman / blok pencarian (1 = baris 1-20, 2 = baris 21-40, dst) |
+| `data` | `jsonb` | Array data profil bisnis (`PlaceResult[]`) |
+| `is_end_of_results` | `boolean` | Penanda apakah Google Maps sudah tidak memiliki data lanjutan |
+| `created_at` | `timestamptz` | Waktu penyimpanan data ke *cache* |
+
+#### 4.3.3. Mekanisme Kerja Caching
+1.  **Format Cache Key Deterministik:**
+    Sistem merangkai kata kunci dan hierarki wilayah menjadi string terpadu:
+    ```
+    cacheKey = "${keyword} di ${village} ${district} ${city} ${province}".toLowerCase()
+    ```
+2.  **Segmentasi Berbasis Halaman (*Block/Page Level*):**
+    Data tidak di-cache sebagai satu file utuh, melainkan dipecah per `page_number` (per blok 20 baris). Hal ini memungkinkan sistem menggabungkan sebagian data dari cache dan sebagian data baru dari SerpAPI jika user meminta jumlah baris yang lebih banyak dari riwayat pencarian sebelumnya.
+3.  **Global Shared Pool:**
+    Cache bersifat lintas-pengguna (*platform-wide*). Jika User A mencari *"Bengkel Motor di Bandung"* sebanyak 100 baris (5 page), maka ketika User B mencari query yang sama keesokan harinya, seluruh 100 baris langsung dimuat dari cache dalam waktu kurang dari 200 ms.
+4.  **Masa Berlaku (TTL - Time-To-Live):**
+    Ditetapkan **24 Jam** (`CACHE_TTL_HOURS = 24`). Data yang lebih lama dari 24 jam otomatis dianggap basi (*stale*), dihapus, dan digantikan dengan data terkini langsung dari SerpAPI.
+5.  **Keandalan Serverless (*Async Flush Safety*):**
+    Operasi penyimpanan ke cache (`saveCacheBlock`) di-`await` secara penuh sebelum HTTP Response dikembalikan ke klien, guna mencegah *early process termination* khas lingkungan Vercel Serverless.
 
 ---
 

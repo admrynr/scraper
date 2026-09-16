@@ -313,11 +313,17 @@ export default async function Home() {
         <section id="pricing" className="py-24 px-4 bg-base-200/50 border-y border-base-300">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-14">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-base-content mb-3">Mulai gratis, upgrade saat butuh lebih banyak.</h2>
-              <p className="text-base-content/70">Tidak ada biaya langganan bulanan. Tidak ada kejutan tagihan.</p>
+              <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-wider">
+                💰 Harga Transparan — Tidak Ada Biaya Tersembunyi
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-base-content mb-3">
+                Bayar Sekali. Dapat Ribuan Prospek.
+              </h2>
+              <p className="text-base-content/70">Tidak ada langganan bulanan. Tidak ada kejutan tagihan. Credits tidak expired.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto items-stretch">
+            {/* Tier 1: Free vs Aktivasi */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto items-stretch mb-8">
 
               {/* Free tier */}
               <div className="card bg-base-100 border border-base-300 shadow-xs rounded-2xl">
@@ -329,7 +335,7 @@ export default async function Home() {
                   </div>
                   <ul className="space-y-3 text-sm text-base-content/80 flex-grow">
                     {[
-                      'Gratis 5x pencarian setelah daftar akun',
+                      'Gratis 5x pencarian setelah daftar',
                       'Maksimal 20 hasil per pencarian',
                       'Filter & urutkan data',
                       'Data tersimpan di browser',
@@ -342,7 +348,7 @@ export default async function Home() {
                     {[
                       'Export Excel / CSV',
                       'Chat WA langsung',
-                      'Hingga 1.000 data per sesi',
+                      'Scraping massal hingga 10.000+ data',
                     ].map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-base-content/40">
                         <span className="mt-0.5">🔒</span>
@@ -359,29 +365,31 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Paid tier */}
+              {/* Aktivasi tier */}
               <div className="card bg-base-100 border-2 border-primary/80 dark:border-primary shadow-xl shadow-primary/10 relative rounded-2xl overflow-visible">
                 <div className="absolute -top-3.5 right-6 z-10">
                   <div className="badge bg-primary text-white border-0 font-bold text-xs px-3.5 py-1.5 shadow-md shadow-primary/30">
-                    Paling Populer • Sekali Bayar
+                    ⭐ Paling Populer · Sekali Bayar
                   </div>
                 </div>
                 <div className="card-body gap-5 p-7 md:p-8">
                   <div>
-                    <div className="inline-block text-xs font-bold uppercase tracking-wider text-primary mb-2">Akses Penuh</div>
-                    <h3 className="text-3xl font-extrabold text-base-content">
-                      Rp 50.000 <span className="text-xs font-normal text-base-content/50">/ seumur hidup</span>
-                    </h3>
-                    <p className="text-base-content/70 text-sm mt-1">Buka semua fitur + bonus 50 kredit awal</p>
+                    <div className="inline-block text-xs font-bold uppercase tracking-wider text-primary mb-2">Akses Penuh Selamanya</div>
+                    <div className="flex items-end gap-2">
+                      <h3 className="text-3xl font-extrabold text-base-content">Rp 49.000</h3>
+                      <span className="text-sm text-base-content/40 line-through mb-1">Rp 99.000</span>
+                    </div>
+                    <p className="text-base-content/70 text-sm mt-1">Bonus langsung <strong>500 credits = 10.000+ prospek</strong> 🎁</p>
                   </div>
                   <ul className="space-y-3 text-sm text-base-content/85 flex-grow">
                     {[
                       'Semua fitur di paket Gratis',
+                      '🎁 Bonus 500 credits langsung aktif',
                       'Export Excel & CSV tanpa batas',
                       'Chat WA 1 klik dengan template pesan',
-                      'Hingga 1.000 data per sesi pencarian',
-                      'Bonus 50 kredit saat aktivasi',
-                      'Top-up kapan saja (Rp 50.000 = 70 kredit)',
+                      'Scraping hingga 10.000+ data per sesi',
+                      'Top-up credits kapan saja',
+                      'Credits tidak pernah expired',
                     ].map((f) => (
                       <li key={f} className="flex items-start gap-2.5">
                         <span className="text-primary font-bold mt-0.5">✓</span>
@@ -390,18 +398,51 @@ export default async function Home() {
                     ))}
                   </ul>
                   <div className="pt-2">
-                    <p className="text-base-content/65 text-xs mb-3 text-center">1 kredit = 100 baris data prospek</p>
+                    <p className="text-base-content/65 text-xs mb-3 text-center">1 credit = 20 data prospek bisnis</p>
                     <Link href={registerHref} className="btn btn-primary w-full shadow-lg shadow-primary/25 font-bold text-base rounded-xl">
-                      Aktivasi Sekarang
+                      Aktivasi Sekarang — Rp 49.000
                     </Link>
                   </div>
                 </div>
               </div>
-
             </div>
-            <p className="text-center text-xs text-base-content/55 mt-8">Pembayaran diproses via Midtrans yang aman & terenkripsi. Tidak ada biaya tersembunyi.</p>
+
+            {/* Top-up plans */}
+            <div className="text-center mb-6">
+              <p className="text-base-content/60 text-sm">Sudah aktif? Isi ulang credits kapan saja sesuai kebutuhan:</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-3xl mx-auto">
+              {[
+                { label: 'Lite', price: 'Rp 25.000', credits: 200, leads: '4.000+', color: 'border-base-300', btnClass: 'btn-outline btn-primary', icon: '⚡' },
+                { label: 'Pro', price: 'Rp 50.000', credits: 500, leads: '10.000+', color: 'border-primary', btnClass: 'btn-primary', icon: '🔥', popular: true },
+                { label: 'Agency', price: 'Rp 100.000', credits: 1200, leads: '24.000+', color: 'border-warning/50', btnClass: 'btn-warning', icon: '🏆' },
+              ].map(plan => (
+                <div key={plan.label} className={`card bg-base-100 border-2 ${plan.color} rounded-2xl ${plan.popular ? 'shadow-lg shadow-primary/10' : 'shadow-xs'}`}>
+                  <div className="card-body p-5 text-center">
+                    <div className="text-2xl mb-1">{plan.icon}</div>
+                    <div className="font-black text-base-content">{plan.label}</div>
+                    <div className="text-2xl font-extrabold text-base-content mt-1">{plan.price}</div>
+                    <div className="flex flex-col gap-1 my-3">
+                      <div className="bg-base-200 rounded-lg px-3 py-1.5 text-sm">
+                        <span className="font-black text-base-content">{plan.credits} credits</span>
+                      </div>
+                      <div className="bg-success/10 border border-success/20 rounded-lg px-3 py-1.5 text-sm">
+                        <span className="font-black text-success">🎯 {plan.leads} prospek</span>
+                      </div>
+                    </div>
+                    <Link href={registerHref} className={`btn btn-sm ${plan.btnClass} w-full font-bold`}>
+                      Beli {plan.label}
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-center text-xs text-base-content/55 mt-8">Pembayaran via Midtrans · Aman & terenkripsi · Semua metode populer Indonesia diterima</p>
           </div>
         </section>
+
+
 
         {/* ── 7. FAQ ── */}
         <section id="faq" className="py-24 px-4 max-w-3xl mx-auto">
@@ -418,7 +459,7 @@ export default async function Home() {
               },
               {
                 q: 'Apa yang berbeda antara akun Gratis dan Aktivasi?',
-                a: 'Setelah mendaftar akun, Anda langsung mendapatkan gratis 5x kuota pencarian (maks. 20 hasil per pencarian) untuk mencoba fitur Prospekto. Akun aktivasi membuka semua fitur tanpa batas — export Excel & CSV, chat WA langsung, dan scraping hingga 1.000 data per sesi — cukup sekali bayar Rp 50.000.',
+                a: 'Setelah mendaftar akun, Anda langsung mendapatkan gratis 5x kuota pencarian (maks. 20 hasil per pencarian) untuk mencoba fitur Prospekto. Akun aktivasi (Rp 49.000 — sekali bayar) membuka semua fitur tanpa batas — export Excel & CSV, chat WA langsung, dan scraping hingga 10.000+ data per sesi — plus bonus langsung 500 credits senilai potensi 10.000 prospek!',
               },
               {
                 q: 'Kalau halaman saya refresh, data hilang nggak?',
@@ -426,7 +467,7 @@ export default async function Home() {
               },
               {
                 q: 'Gimana cara top-up kredit, dan apakah kredit punya masa berlaku?',
-                a: 'Top-up bisa dilakukan kapan saja lewat halaman dashboard. Paket tersedia mulai Rp 50.000 untuk 70 kredit (1 kredit = 100 baris data). Kredit tidak punya masa kadaluwarsa — akan tetap ada sampai Anda pakai.',
+                a: 'Top-up bisa dilakukan kapan saja lewat halaman dashboard. Pilih dari 3 paket: Lite (Rp 25.000 = 200 credits = 4.000+ prospek), Pro (Rp 50.000 = 500 credits = 10.000+ prospek), atau Agency (Rp 100.000 = 1.200 credits = 24.000+ prospek). Credits tidak pernah kadaluwarsa — tetap ada sampai Anda pakai.',
               },
               {
                 q: 'Kalau pencarian tiba-tiba berhenti di tengah jalan, datanya hilang?',

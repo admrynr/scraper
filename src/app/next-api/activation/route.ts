@@ -7,14 +7,30 @@ import Midtrans from 'midtrans-client';
 // Pricing config
 const PRICING = {
   activation: {
-    amount: 50000,      // Rp 50.000
-    credits: 50,        // 50 credits bonus
-    label: 'Aktivasi Akun Prospekto',
+    amount: 49000,        // Rp 49.000
+    credits: 500,         // 500 credits bonus
+    label: 'Aktivasi Akun Prospekto + 500 Credits',
   },
-  topup: {
-    amount: 50000,      // Rp 50.000
-    credits: 70,        // 70 credits
-    label: 'Top Up 70 Credits Prospekto',
+  topup_lite: {
+    amount: 25000,        // Rp 25.000
+    credits: 200,
+    label: 'Top Up Lite 200 Credits Prospekto',
+  },
+  topup_pro: {
+    amount: 50000,        // Rp 50.000
+    credits: 500,
+    label: 'Top Up Pro 500 Credits Prospekto',
+  },
+  topup_agency: {
+    amount: 100000,       // Rp 100.000
+    credits: 1200,
+    label: 'Top Up Agency 1200 Credits Prospekto',
+  },
+  // Admin test only — nominal kecil untuk testing Midtrans sandbox
+  test_topup: {
+    amount: 5000,
+    credits: 10,
+    label: '[TEST] Top Up 10 Credits Prospekto',
   },
 } as const;
 
@@ -56,8 +72,8 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const type: PricingType = body.type;
 
-  if (!type || !PRICING[type]) {
-    return NextResponse.json({ error: 'Tipe tidak valid. Gunakan "activation" atau "topup".' }, { status: 400 });
+  if (!type || !PRICING[type as PricingType]) {
+    return NextResponse.json({ error: 'Tipe tidak valid.' }, { status: 400 });
   }
 
   // Cek jika user sudah aktif dan mencoba aktivasi lagi
@@ -68,8 +84,6 @@ export async function POST(request: NextRequest) {
   const pricing = PRICING[type];
 
   // ── Cek apakah ada pending request dengan snap_token yang dibuat < 5 menit lalu ──
-  // Window 5 menit: cukup untuk retry langsung setelah tutup popup, tapi tidak reuse
-  // jika user navigasi ke halaman lain (biasanya lebih dari beberapa menit)
   const reuseWindow = new Date(Date.now() - 5 * 60 * 1000).toISOString();
   const { data: existingReq } = await adminClient
     .from('activation_requests')
@@ -267,9 +281,8 @@ export async function DELETE(request: NextRequest) {
     .eq('user_id', user.id)
     .eq('status', 'pending');
 
-  // Jika type disertakan, hanya hapus untuk tipe itu
-  if (type && ['activation', 'topup'].includes(type)) {
-    query.eq('type', type);
+  if (type && Object.keys(PRICING).includes(type)) {
+    (query as any).eq('type', type);
   }
 
   const { error } = await query;

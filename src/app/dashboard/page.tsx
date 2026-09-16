@@ -328,14 +328,12 @@ export default function DashboardPage() {
                   className={selStyle} 
                   required
                 >
-                  <option value={20}>20 Baris (1 Halaman)</option>
-                  <option value={40}>40 Baris (2 Halaman)</option>
-                  <option value={60}>60 Baris (3 Halaman)</option>
-                  <option value={80}>80 Baris (4 Halaman)</option>
-                  <option value={100}>100 Baris (1 Credit)</option>
-                  <option value={200}>200 Baris (2 Credits)</option>
-                  <option value={500}>500 Baris (5 Credits)</option>
-                  <option value={1000}>1000 Baris (10 Credits)</option>
+                  <option value={20}>20 Baris (1 Kredit)</option>
+                  <option value={40}>40 Baris (2 Kredit)</option>
+                  <option value={60}>60 Baris (3 Kredit)</option>
+                  <option value={80}>80 Baris (4 Kredit)</option>
+                  <option value={100}>100 Baris (5 Kredit)</option>
+                  <option value={120}>120 Baris (6 Kredit - Maks. Google Maps)</option>
                 </select>
               </div>
               <button type="submit" disabled={loading} className="btn btn-primary w-full mt-7">

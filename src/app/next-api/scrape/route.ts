@@ -8,12 +8,20 @@ export const maxDuration = 60;
 const FREE_DAILY_SCRAPE_LIMIT = 5;
 const FREE_MAX_ROWS = 20;
 /**
- * 1 app credit = 1 SerpAPI call = up to 20 Google Maps results.
+ * 1 app credit = 1 DataForSEO call = up to 20 Google Maps results.
  * Cache key: kombinasi query string + page_number (nomor call ke-berapa).
  */
 const ROWS_PER_CREDIT = 20;
+const MAX_SCRAPE_ROWS = 120; // Batas pagination (6 pages x 20)
 const CACHE_TTL_HOURS = 24;
-const SERP_FETCH_TIMEOUT_MS = 9000;
+const DFS_FETCH_TIMEOUT_MS = 30000; // DataForSEO Live lebih lambat
+
+// ─── DataForSEO Auth ──────────────────────────────────────────────────────────
+function getDfsAuthHeader(): string {
+  const login = process.env.DATAFORSEO_LOGIN!;
+  const password = process.env.DATAFORSEO_PASSWORD!;
+  return 'Basic ' + Buffer.from(`${login}:${password}`).toString('base64');
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PlaceResult {
@@ -32,17 +40,57 @@ interface PlaceResult {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function fetchSerpPage(url: string): Promise<any> {
+/**
+ * Fetch dari DataForSEO Google Maps Live Advanced.
+ * depth = jumlah hasil yang diminta (kelipatan 20).
+ * location_code 2360 = Indonesia (DataForSEO country code).
+ */
+async function fetchDfsPage(
+  searchQuery: string,
+  depth: number
+): Promise<any> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), SERP_FETCH_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), DFS_FETCH_TIMEOUT_MS);
+
+  const body = JSON.stringify([
+    {
+      keyword: searchQuery,
+      location_code: 2360,   // Indonesia
+      language_code: 'id',   // Bahasa Indonesia
+      device: 'desktop',
+      os: 'windows',
+      depth: depth,
+      search_places: true,
+    },
+  ]);
+
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(
+      'https://api.dataforseo.com/v3/serp/google/maps/live/advanced',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: getDfsAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body,
+        signal: controller.signal,
+      }
+    );
     clearTimeout(timeoutId);
+
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(`SerpAPI error (${response.status}): ${text}`);
+      throw new Error(`DataForSEO error (${response.status}): ${text}`);
     }
-    return response.json();
+
+    const json = await response.json();
+    const task = json?.tasks?.[0];
+    if (!task) throw new Error('DataForSEO: no task in response');
+    if (task.status_code !== 20000) {
+      throw new Error(`DataForSEO task error ${task.status_code}: ${task.status_message}`);
+    }
+    return task;
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') throw new Error('TIMEOUT');
@@ -53,34 +101,48 @@ async function fetchSerpPage(url: string): Promise<any> {
 function isQuotaError(msg: string): boolean {
   const lower = msg.toLowerCase();
   return (
-    lower.includes('out of searches') ||
+    lower.includes('payment') ||
     lower.includes('credit') ||
     lower.includes('quota') ||
-    lower.includes('limit reached')
+    lower.includes('limit reached') ||
+    lower.includes('40602') || // DataForSEO: task limit exceeded
+    lower.includes('40006')    // DataForSEO: insufficient balance
   );
 }
 
+/**
+ * Parse items dari DataForSEO Maps response ke PlaceResult[].
+ * DataForSEO field mapping:
+ *   title              → name
+ *   address            → address
+ *   phone              → phone
+ *   url                → website
+ *   rating.value       → rating
+ *   rating.votes_count → reviews
+ */
 function parsePlaces(
-  rawPlaces: any[],
+  items: any[],
   kw: string,
   province: string,
   city: string,
   district: string,
   village: string
 ): PlaceResult[] {
-  return rawPlaces.map((place: any) => ({
-    keyword_used: kw,
-    name: place.title || null,
-    address: place.address || null,
-    phone: place.phone || null,
-    website: place.website || null,
-    rating: place.rating || null,
-    reviews: place.reviews || null,
-    province,
-    city,
-    district,
-    village,
-  }));
+  return items
+    .filter((item: any) => item.type === 'maps_search')
+    .map((item: any) => ({
+      keyword_used: kw,
+      name: item.title || null,
+      address: item.address || null,
+      phone: item.phone || null,
+      website: item.url || null,
+      rating: item.rating?.value ?? null,
+      reviews: item.rating?.votes_count ?? null,
+      province,
+      city,
+      district,
+      village,
+    }));
 }
 
 /**
@@ -178,7 +240,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Keyword dan kota wajib diisi.' }, { status: 400 });
   }
 
-  let effectiveMaxRows: number = requestedMaxRows;
+  let effectiveMaxRows: number = Math.min(requestedMaxRows, MAX_SCRAPE_ROWS);
 
   // ─── 4. Free user: flow lama tanpa cache ──────────────────────────────────
   if (!isSuperAdmin && !isActivated) {
@@ -212,7 +274,7 @@ export async function POST(request: NextRequest) {
   }
 
   // ─── 5. Activated / SuperAdmin: credit check ──────────────────────────────
-  // 1 credit = 1 SerpAPI call = up to 20 data
+  // 1 credit = 1 DataForSEO call = up to 20 data
   const targetPages = Math.ceil(effectiveMaxRows / ROWS_PER_CREDIT);
 
   if (!isSuperAdmin) {
@@ -228,23 +290,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ─── 6. API key ────────────────────────────────────────────────────────────
-  const { data: activeKey } = await adminClient
-    .from('serp_api_keys')
-    .select('id, api_key, quota_exhausted')
-    .eq('is_active', true)
-    .single();
-
-  if (!activeKey) {
+  // ─── 6. Cek DataForSEO credentials ────────────────────────────────────────
+  if (!process.env.DATAFORSEO_LOGIN || !process.env.DATAFORSEO_PASSWORD) {
     return NextResponse.json(
-      { error: 'Belum ada API key aktif. Hubungi admin untuk mengatur API key.' },
-      { status: 503 }
-    );
-  }
-
-  if (activeKey.quota_exhausted) {
-    return NextResponse.json(
-      { error: 'Kuota SerpAPI habis. Admin sedang menyiapkan API key baru.' },
+      { error: 'Konfigurasi search engine belum lengkap. Hubungi admin.' },
       { status: 503 }
     );
   }
@@ -255,7 +304,7 @@ export async function POST(request: NextRequest) {
   if (district) locationParts.push(district);
   locationParts.push(city);
   if (province) locationParts.push(province);
-  const locationStr = locationParts.join(' ');
+  const locationStr = locationParts.join(', ');
 
   const keywordsList = keyword.split(',').map((k: string) => k.trim()).filter(Boolean);
   const searchQuery = `${keywordsList[0]} di ${locationStr}`;
@@ -268,9 +317,10 @@ export async function POST(request: NextRequest) {
   let quotaExhausted = false;
   let partialReturn = false;
 
-  // ─── 8. Loop per page (1 page = 1 SerpAPI call = 1 credit = up to 20 data) ──
+  // ─── 8. Loop per page (1 page = 1 DataForSEO call = 1 credit = up to 20 data) ──
+  // DataForSEO tidak support offset — kita request depth bertambah dan slice hasilnya.
   for (let pageNum = 1; pageNum <= targetPages; pageNum++) {
-    const serpStart = (pageNum - 1) * ROWS_PER_CREDIT; // 0, 20, 40, ...
+    const offset = (pageNum - 1) * ROWS_PER_CREDIT;
 
     // 8a. Cek cache
     const cached = await getCacheBlock(adminClient, cacheKey, pageNum);
@@ -283,17 +333,13 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    // 8b. Cache Miss → fetch SerpAPI
-    const url = new URL('https://serpapi.com/search.json');
-    url.searchParams.set('engine', 'google_maps');
-    url.searchParams.set('q', searchQuery);
-    url.searchParams.set('type', 'search');
-    url.searchParams.set('api_key', activeKey.api_key);
-    url.searchParams.set('start', String(serpStart));
+    // 8b. Cache Miss → fetch DataForSEO
+    // Request depth = offset + 20 agar hasil halaman ini tersedia, lalu slice
+    const depthNeeded = offset + ROWS_PER_CREDIT;
 
-    let serpData: any;
+    let task: any;
     try {
-      serpData = await fetchSerpPage(url.toString());
+      task = await fetchDfsPage(searchQuery, depthNeeded);
     } catch (err: any) {
       if (err.message === 'TIMEOUT') {
         partialReturn = true;
@@ -301,22 +347,15 @@ export async function POST(request: NextRequest) {
       }
       if (isQuotaError(err.message || '')) {
         quotaExhausted = true;
-        await adminClient.from('serp_api_keys').update({ quota_exhausted: true }).eq('id', activeKey.id);
       }
       break;
     }
 
-    if (serpData?.error) {
-      if (isQuotaError(String(serpData.error))) {
-        quotaExhausted = true;
-        await adminClient.from('serp_api_keys').update({ quota_exhausted: true }).eq('id', activeKey.id);
-      }
-      break;
-    }
+    const allItems: any[] = task?.result?.[0]?.items || [];
+    const pageItems = allItems.slice(offset, offset + ROWS_PER_CREDIT);
+    const isEndOfResults = pageItems.length === 0 || allItems.length < depthNeeded;
 
-    const rawPlaces: any[] = serpData.local_results || [];
-    const isEndOfResults = rawPlaces.length === 0 || !serpData.serpapi_pagination?.next;
-    const parsed = parsePlaces(rawPlaces, keywordsList[0], province, city, district, village);
+    const parsed = parsePlaces(pageItems, keywordsList[0], province, city, district, village);
 
     // 8c. Simpan ke cache — HARUS di-await (serverless kill process setelah return)
     if (parsed.length > 0) {
@@ -350,7 +389,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(finalResults, { headers });
 }
 
-// ─── Free User: flow lama (tanpa cache) ───────────────────────────────────────
+// ─── Free User: flow tanpa cache ──────────────────────────────────────────────
 
 async function handleFreeUserScrape(
   adminClient: ReturnType<typeof createAdminClient>,
@@ -361,22 +400,10 @@ async function handleFreeUserScrape(
   province: string,
   effectiveMaxRows: number
 ): Promise<NextResponse> {
-  const { data: activeKey } = await adminClient
-    .from('serp_api_keys')
-    .select('id, api_key, quota_exhausted')
-    .eq('is_active', true)
-    .single();
-
-  if (!activeKey) {
+  // Cek DataForSEO credentials
+  if (!process.env.DATAFORSEO_LOGIN || !process.env.DATAFORSEO_PASSWORD) {
     return NextResponse.json(
-      { error: 'Belum ada API key aktif. Hubungi admin untuk mengatur API key.' },
-      { status: 503 }
-    );
-  }
-
-  if (activeKey.quota_exhausted) {
-    return NextResponse.json(
-      { error: 'Kuota SerpAPI habis. Admin sedang menyiapkan API key baru.' },
+      { error: 'Konfigurasi search engine belum lengkap. Hubungi admin.' },
       { status: 503 }
     );
   }
@@ -386,7 +413,7 @@ async function handleFreeUserScrape(
   if (district) locationParts.push(district);
   locationParts.push(city);
   if (province) locationParts.push(province);
-  const locationStr = locationParts.join(' ');
+  const locationStr = locationParts.join(', ');
 
   const keywordsList = keyword.split(',').map((k: string) => k.trim()).filter(Boolean);
   const data: PlaceResult[] = [];
@@ -394,68 +421,41 @@ async function handleFreeUserScrape(
   let quotaExhausted = false;
   let partialReturn = false;
 
-  const maxPages = Math.ceil(effectiveMaxRows / 20);
-
   for (const kw of keywordsList) {
     if (partialReturn || data.length >= effectiveMaxRows) break;
     const searchQuery = `${kw} di ${locationStr}`;
-    let start = 0;
-    let page = 0;
 
-    while (page < maxPages && data.length < effectiveMaxRows) {
-      const url = new URL('https://serpapi.com/search.json');
-      url.searchParams.set('engine', 'google_maps');
-      url.searchParams.set('q', searchQuery);
-      url.searchParams.set('type', 'search');
-      url.searchParams.set('api_key', activeKey.api_key);
-      url.searchParams.set('start', String(start));
+    let task: any;
+    try {
+      // Free user: satu call dengan depth = effectiveMaxRows (max 20)
+      task = await fetchDfsPage(searchQuery, effectiveMaxRows);
+    } catch (err: any) {
+      if (err.message === 'TIMEOUT') { partialReturn = true; break; }
+      if (isQuotaError(err.message || '')) quotaExhausted = true;
+      break;
+    }
 
-      let results: any;
-      try {
-        results = await fetchSerpPage(url.toString());
-      } catch (err: any) {
-        if (err.message === 'TIMEOUT') { partialReturn = true; break; }
-        if (isQuotaError(err.message || '')) {
-          quotaExhausted = true;
-          await adminClient.from('serp_api_keys').update({ quota_exhausted: true }).eq('id', activeKey.id);
-        }
-        break;
-      }
+    const items: any[] = task?.result?.[0]?.items || [];
+    const places = items.filter((item: any) => item.type === 'maps_search');
 
-      if (results?.error) {
-        if (isQuotaError(String(results.error))) {
-          quotaExhausted = true;
-          await adminClient.from('serp_api_keys').update({ quota_exhausted: true }).eq('id', activeKey.id);
-        }
-        break;
-      }
-
-      const places = results.local_results || [];
-      if (places.length === 0) break;
-
-      for (const place of places) {
-        if (data.length >= effectiveMaxRows) break;
-        const uniqueId = place.place_id || `${place.title}_${place.address}`;
-        if (seenPlaces.has(uniqueId)) continue;
-        seenPlaces.add(uniqueId);
-        data.push({
-          keyword_used: kw,
-          name: place.title || null,
-          address: place.address || null,
-          phone: place.phone || null,
-          website: place.website || null,
-          rating: place.rating || null,
-          reviews: place.reviews || null,
-          province,
-          city,
-          district,
-          village,
-        });
-      }
-
-      if (!results.serpapi_pagination?.next) break;
-      start += 20;
-      page++;
+    for (const place of places) {
+      if (data.length >= effectiveMaxRows) break;
+      const uniqueId = place.place_id || `${place.title}_${place.address}`;
+      if (seenPlaces.has(uniqueId)) continue;
+      seenPlaces.add(uniqueId);
+      data.push({
+        keyword_used: kw,
+        name: place.title || null,
+        address: place.address || null,
+        phone: place.phone || null,
+        website: place.url || null,
+        rating: place.rating?.value ?? null,
+        reviews: place.rating?.votes_count ?? null,
+        province,
+        city,
+        district,
+        village,
+      });
     }
   }
 

@@ -23,7 +23,7 @@ const FEATURE_TEXT: Record<string, { icon: string; title: string; desc: string }
   max_rows: {
     icon: '📋',
     title: 'Max Rows Lebih Banyak',
-    desc: 'Pilih hingga 1000 baris hasil scraping untuk akun yang sudah diaktivasi.',
+    desc: 'Pilih hingga 120 baris hasil scraping untuk akun yang sudah diaktivasi.',
   },
   scrape_limit: {
     icon: '🔄',
@@ -95,8 +95,8 @@ export default function UpgradeModal({ isOpen, onClose, feature = 'scrape_limit'
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-semibold text-base-content text-sm">Top Up Credits</p>
-                    <p className="text-xs text-base-content/60 mt-0.5">70 credits tambahan</p>
-                    <p className="text-xs text-base-content/40 mt-1">1 credit = 100 baris data hasil scraping</p>
+                    <p className="text-xs text-base-content/60 mt-0.5">60 credits tambahan</p>
+                    <p className="text-xs text-base-content/40 mt-1">1 credit = hingga 20 baris data hasil scraping</p>
                   </div>
                   <div className="text-right shrink-0 ml-4">
                     <p className="text-xl font-bold text-base-content">50rb</p>
@@ -111,8 +111,8 @@ export default function UpgradeModal({ isOpen, onClose, feature = 'scrape_limit'
               <div className="flex justify-between items-center">
                 <div>
                   <p className="font-bold text-base-content">Top Up Credits</p>
-                  <p className="text-xs text-base-content/60 mt-0.5">Dapatkan 70 credits tambahan</p>
-                  <p className="text-xs text-base-content/40 mt-1">1 credit = 100 baris data hasil scraping</p>
+                  <p className="text-xs text-base-content/60 mt-0.5">Dapatkan 60 credits tambahan</p>
+                  <p className="text-xs text-base-content/40 mt-1">1 credit = hingga 20 baris data hasil scraping</p>
                 </div>
                 <div className="text-right shrink-0 ml-4">
                   <p className="text-2xl font-bold text-warning">50rb</p>
