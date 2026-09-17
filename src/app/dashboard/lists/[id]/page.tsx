@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import ThemeToggle from '@/components/ThemeToggle';
 import toast from 'react-hot-toast';
+import { confirmToast } from '@/lib/confirmToast';
 import * as XLSX from 'xlsx';
 import { ALL_VARIABLES } from '@/components/WaTemplateEditor';
 
@@ -70,7 +71,12 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
 
   const deleteSelected = async () => {
     if (selectedIndices.size === 0) return;
-    if (!confirm(`Hapus ${selectedIndices.size} prospek dari list ini?`)) return;
+    const confirmed = await confirmToast(`Hapus ${selectedIndices.size} prospek dari list ini?`, {
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     
     try {
       const res = await fetch(`/next-api/lists/${listId}/prospects`, {

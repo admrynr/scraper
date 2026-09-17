@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Logo from '@/components/Logo';
 import ThemeToggle from '@/components/ThemeToggle';
 import toast from 'react-hot-toast';
+import { confirmToast } from '@/lib/confirmToast';
 import { createClient } from '@/lib/supabase/client';
 
 export default function ListsPage() {
@@ -83,7 +84,12 @@ export default function ListsPage() {
   const closeModal = () => { setShowModal(false); setNewName(''); setNewDesc(''); };
 
   const deleteList = async (id: string, name: string) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus Campaign "${name}" beserta semua isinya?`)) return;
+    const confirmed = await confirmToast(`Apakah Anda yakin ingin menghapus Campaign "${name}" beserta semua isinya?`, {
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/next-api/lists/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus');

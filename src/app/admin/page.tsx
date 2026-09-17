@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Logo from '@/components/Logo';
 import toast from 'react-hot-toast';
+import { confirmToast } from '@/lib/confirmToast';
 
 declare global { interface Window { snap: any; } }
 
@@ -93,7 +94,12 @@ export default function AdminPage() {
   };
 
   const deleteUser = async (userId: string, email: string) => {
-    if (!confirm(`Hapus user ${email}?`)) return;
+    const confirmed = await confirmToast(`Hapus user ${email}?`, {
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'danger',
+    });
+    if (!confirmed) return;
     const res = await fetch(`/next-api/admin/users?userId=${userId}`, { method: 'DELETE' });
     if (res.ok) { toast.success('User dihapus.'); loadUsers(); setDrawerOpen(false); } else { toast.error('Gagal hapus.'); }
   };
@@ -333,7 +339,17 @@ export default function AdminPage() {
                 <button
                   disabled={testLoading}
                   onClick={async () => {
-                    if (testEnv === 'production' && !confirm(`⚠️ PERINGATAN: Ini akan membuat transaksi PRODUCTION nyata!\nPaket: ${testPlan}\nUang akan benar-benar terpotong.\n\nLanjutkan?`)) return;
+                    if (testEnv === 'production') {
+                      const confirmed = await confirmToast(
+                        `⚠️ PERINGATAN: Ini akan membuat transaksi PRODUCTION nyata!\nPaket: ${testPlan}\nUang akan benar-benar terpotong.\n\nLanjutkan?`,
+                        {
+                          confirmText: 'Ya, Lanjutkan',
+                          cancelText: 'Batal',
+                          type: 'warning',
+                        }
+                      );
+                      if (!confirmed) return;
+                    }
                     setTestLoading(true);
                     setTestMsg(null);
                     try {

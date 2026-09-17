@@ -149,7 +149,7 @@ export default function RegisterPage() {
               Klik link tersebut untuk mengaktifkan akun Anda dan langsung bisa login.
             </p>
             <div className="alert alert-success shadow-sm p-3 text-xs rounded-md mb-5 text-left">
-              <span>✅ Setelah klik link di email, akun Anda <strong>langsung aktif</strong> dan siap digunakan — tidak perlu menunggu persetujuan apapun.</span>
+              <span>✅ Setelah klik link di email, akun Anda <strong>langsung aktif</strong> dan siap digunakan</span>
             </div>
             {resendMsg && (
               <div className={`alert shadow-sm p-2 text-xs rounded-md mb-3 ${resendMsg.includes('Gagal') ? 'alert-error' : 'alert-success'}`}>
