@@ -15,14 +15,51 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Prospekto CRM - Platform Ekstraksi Data Prospek B2B & B2C",
-  description: "Prospekto CRM - Ekstrak data prospek bisnis lokal dan otomatisasi outreach secara efisien.",
+  metadataBase: new URL('https://prospekto.id'),
+  title: {
+    default: "Prospekto CRM - Platform Ekstraksi Data Prospek B2B & B2C",
+    template: "%s | Prospekto CRM",
+  },
+  description: "Prospekto CRM - Ekstrak data prospek bisnis lokal (B2B & B2C) dari Google Maps dan optimasi outreach secara efisien. Kembangkan bisnis Anda dengan data prospek berkualitas.",
+  keywords: ["CRM", "Ekstraksi Data", "Prospek B2B", "Prospek B2C", "Google Maps Scraper", "Data Bisnis Lokal", "Outreach", "Prospekto", "Lead Generation"],
+  authors: [{ name: "Prospekto" }],
+  creator: "Prospekto",
+  publisher: "Prospekto",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    title: "Prospekto CRM - Platform Ekstraksi Data Prospek",
+    description: "Ekstrak data prospek bisnis lokal dan otomatisasi outreach secara efisien.",
+    url: "https://prospekto.id",
+    siteName: "Prospekto CRM",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Prospekto CRM",
+    description: "Platform Ekstraksi Data Prospek B2B & B2C Terbaik.",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
       { url: "/icon.png", type: "image/png" }
     ],
     apple: "/apple-icon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 

@@ -1,0 +1,23 @@
+# Prospekto CRM
+
+> Prospekto CRM adalah platform ekstraksi data prospek B2B & B2C terdepan di Indonesia.
+
+## Ringkasan
+Prospekto CRM dirancang untuk membantu bisnis lokal, tim sales, dan pemasar menemukan prospek potensial dengan mengekstrak data dari Google Maps. Pengguna dapat menemukan nomor telepon, email, alamat, dan informasi bisnis lainnya, kemudian melakukan optimasi outreach (jangkauan pelanggan) secara efisien melalui platform kami.
+
+## Fitur Utama
+- **Ekstraksi Data Otomatis**: Mendapatkan prospek (leads) dari Google Maps dalam hitungan menit.
+- **Manajemen Prospek (CRM)**: Mengorganisasi dan mengelola daftar prospek untuk tim penjualan.
+- **Ekspor Data**: Mengunduh data ke format CSV/Excel.
+- **Integrasi Outreach**: Mempermudah proses pengiriman pesan promosi dan penawaran ke prospek.
+
+## Teknologi & Arsitektur
+Aplikasi ini dibangun menggunakan Next.js (App Router), React, dan berjalan pada Vercel.
+
+## Tautan Resmi
+- Website: https://prospekto.id
+- Login: https://prospekto.id/auth/login
+- Registrasi: https://prospekto.id/auth/register
+
+## Panduan untuk AI / LLM
+File ini disediakan agar asisten AI, crawler LLM, dan bot pencarian dapat lebih mudah memahami konteks dari aplikasi Prospekto CRM. Platform ini bersifat tertutup (butuh otentikasi) untuk fitur utama dasbor ekstraksi, namun informasi pemasaran dan paket harga tersedia secara publik.
