@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
+import { calculateScore, isPermanentlyClosed } from '@/lib/scoring';
 
 export const maxDuration = 60;
 
@@ -36,6 +37,14 @@ interface PlaceResult {
   city: string;
   district: string;
   village: string;
+  // New fields from DataForSEO for scoring
+  is_claimed: boolean | null;
+  business_status: string | null;
+  work_hours: any | null;
+  main_image: string | null;
+  // Computed scoring fields
+  score: number;
+  score_label: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -119,6 +128,10 @@ function isQuotaError(msg: string): boolean {
  *   url                → website
  *   rating.value       → rating
  *   rating.votes_count → reviews
+ *   is_claimed         → is_claimed  (baru)
+ *   business_status    → business_status  (baru — dipakai untuk filter permanently_closed)
+ *   work_hours         → work_hours  (baru — untuk scoring jam operasional)
+ *   main_image         → main_image  (baru — untuk scoring foto profil)
  */
 function parsePlaces(
   items: any[],
@@ -130,19 +143,29 @@ function parsePlaces(
 ): PlaceResult[] {
   return items
     .filter((item: any) => item.type === 'maps_search')
-    .map((item: any) => ({
-      keyword_used: kw,
-      name: item.title || null,
-      address: item.address || null,
-      phone: item.phone || null,
-      website: item.url || null,
-      rating: item.rating?.value ?? null,
-      reviews: item.rating?.votes_count ?? null,
-      province,
-      city,
-      district,
-      village,
-    }));
+    // Hard filter: exclude bisnis yang permanently closed
+    .filter((item: any) => !isPermanentlyClosed({ business_status: item.business_status }))
+    .map((item: any) => {
+      const base = {
+        keyword_used: kw,
+        name: item.title || null,
+        address: item.address || null,
+        phone: item.phone || null,
+        website: item.url || null,
+        rating: item.rating?.value ?? null,
+        reviews: item.rating?.votes_count ?? null,
+        province,
+        city,
+        district,
+        village,
+        is_claimed: item.is_claimed ?? null,
+        business_status: item.business_status || null,
+        work_hours: item.work_hours || null,
+        main_image: item.main_image || null,
+      };
+      const { score, score_label } = calculateScore(base);
+      return { ...base, score, score_label };
+    });
 }
 
 /**
@@ -376,7 +399,10 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id);
   }
 
-  const finalResults = allResults.slice(0, effectiveMaxRows);
+  // Sort by score descending (Hot leads first)
+  const finalResults = allResults
+    .slice(0, effectiveMaxRows)
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
   const headers: Record<string, string> = {};
   if (partialReturn) headers['X-Partial-Results'] = 'true';
@@ -436,14 +462,16 @@ async function handleFreeUserScrape(
     }
 
     const items: any[] = task?.result?.[0]?.items || [];
-    const places = items.filter((item: any) => item.type === 'maps_search');
+    const places = items
+      .filter((item: any) => item.type === 'maps_search')
+      .filter((item: any) => !isPermanentlyClosed({ business_status: item.business_status }));
 
     for (const place of places) {
       if (data.length >= effectiveMaxRows) break;
       const uniqueId = place.place_id || `${place.title}_${place.address}`;
       if (seenPlaces.has(uniqueId)) continue;
       seenPlaces.add(uniqueId);
-      data.push({
+      const base = {
         keyword_used: kw,
         name: place.title || null,
         address: place.address || null,
@@ -455,9 +483,18 @@ async function handleFreeUserScrape(
         city,
         district,
         village,
-      });
+        is_claimed: place.is_claimed ?? null,
+        business_status: place.business_status || null,
+        work_hours: place.work_hours || null,
+        main_image: place.main_image || null,
+      };
+      const { score, score_label } = calculateScore(base);
+      data.push({ ...base, score, score_label });
     }
   }
+
+  // Sort by score descending (Hot leads first)
+  data.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
   const headers: Record<string, string> = {};
   if (partialReturn) headers['X-Partial-Results'] = 'true';

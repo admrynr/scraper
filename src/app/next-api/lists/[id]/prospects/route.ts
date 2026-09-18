@@ -12,17 +12,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   // Get query params for filtering
   const url = new URL(req.url);
-  const status = url.searchParams.get('status');
+  const status = url.searchParams.get('status');             // CRM status lama
+  const scoreLabel = url.searchParams.get('score_label');    // hot|warm|cold|unreachable
+  const pipelineStatus = url.searchParams.get('pipeline_status'); // pipeline status baru
 
   let query = supabase
     .from('saved_prospects')
     .select('*')
     .eq('list_id', id)
     .eq('user_id', user.id)
+    .order('score', { ascending: false, nullsFirst: false })
     .order('saved_at', { ascending: false });
 
   if (status && status !== 'all') {
     query = query.eq('status', status);
+  }
+  if (scoreLabel && scoreLabel !== 'all') {
+    query = query.eq('score_label', scoreLabel);
+  }
+  if (pipelineStatus && pipelineStatus !== 'all') {
+    query = query.eq('pipeline_status', pipelineStatus);
   }
 
   const { data, error } = await query;
@@ -68,7 +77,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     rating: p.rating ? parseFloat(p.rating) : null,
     reviews: p.reviews ? parseInt(p.reviews, 10) : null,
     maps_url: p.maps_url || null,
-    status: 'belum_dihubungi', // default
+    status: 'belum_dihubungi',           // CRM status (lama)
+    pipeline_status: 'belum_dihubungi',  // Pipeline status (baru)
+    // Scoring fields — dihitung otomatis saat scrape, disimpan apa adanya
+    score: p.score ?? null,
+    score_label: p.score_label ?? null,
+    is_claimed: p.is_claimed ?? null,
+    business_status: p.business_status ?? null,
   }));
 
   // Upsert to ignore duplicates based on list_id and place_id

@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { confirmToast } from '@/lib/confirmToast';
 import * as XLSX from 'xlsx';
 import { ALL_VARIABLES } from '@/components/WaTemplateEditor';
+import { SCORE_BADGE_CONFIG, type ScoreLabel } from '@/lib/scoring';
 
 export default function CampaignDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -18,7 +19,9 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   const [listData, setListData] = useState<any>(null);
   const [prospects, setProspects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');         // CRM status (lama)
+  const [scoreLabelFilter, setScoreLabelFilter] = useState('all'); // score label filter
+  const [pipelineFilter, setPipelineFilter] = useState('all');     // pipeline status filter
   const [selectedIndices, setSelectedIndices] = useState<Set<string>>(new Set());
   
   const [waTemplate, setWaTemplate] = useState('Halo {name}, perkenalkan kami dari ...');
@@ -30,15 +33,21 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
 
   useEffect(() => {
     fetchData();
-  }, [listId, statusFilter]);
+  }, [listId, statusFilter, scoreLabelFilter, pipelineFilter]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Get list metadata via API (avoid direct client query / permission denied)
+      // Build prospects query params
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (scoreLabelFilter !== 'all') params.set('score_label', scoreLabelFilter);
+      if (pipelineFilter !== 'all') params.set('pipeline_status', pipelineFilter);
+      const prospectsUrl = `/next-api/lists/${listId}/prospects${params.toString() ? `?${params}` : ''}`;
+
       const [listRes, prospectsRes] = await Promise.all([
         fetch(`/next-api/lists/${listId}`),
-        fetch(`/next-api/lists/${listId}/prospects${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`),
+        fetch(prospectsUrl),
       ]);
 
       if (listRes.status === 401) { router.push('/auth/login'); return; }
@@ -64,6 +73,20 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
       if (!res.ok) throw new Error('Gagal update status');
       setProspects(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
       toast.success('Status diupdate');
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const updatePipelineStatus = async (id: string, newPipeline: string) => {
+    try {
+      const res = await fetch(`/next-api/lists/${listId}/prospects/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pipeline_status: newPipeline })
+      });
+      if (!res.ok) throw new Error('Gagal update pipeline status');
+      setProspects(prev => prev.map(p => p.id === id ? { ...p, pipeline_status: newPipeline } : p));
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -163,19 +186,46 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
         {/* Content */}
         <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 overflow-hidden">
           <div className="p-4 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-base-200/30">
-            <div className="flex gap-2 items-center w-full md:w-auto">
+            <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
+              {/* Filter CRM Status (lama) */}
               <select 
                 className="select select-sm select-bordered bg-base-100 text-base-content" 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="all">Semua Status</option>
+                <option value="all">Semua Status CRM</option>
                 <option value="belum_dihubungi">Belum Dihubungi</option>
                 <option value="sudah_dihubungi">Sudah Dihubungi</option>
                 <option value="tertarik">Tertarik</option>
                 <option value="tidak_tertarik">Tidak Tertarik</option>
                 <option value="follow_up">Follow Up</option>
                 <option value="deal">Deal</option>
+              </select>
+              {/* Filter Pipeline Status (baru) */}
+              <select
+                className="select select-sm select-bordered bg-base-100 text-base-content"
+                value={pipelineFilter}
+                onChange={(e) => setPipelineFilter(e.target.value)}
+              >
+                <option value="all">Semua Pipeline</option>
+                <option value="belum_dihubungi">Belum Dihubungi</option>
+                <option value="dihubungi">Dihubungi</option>
+                <option value="dibalas">Dibalas</option>
+                <option value="tertarik">Tertarik</option>
+                <option value="closed">Closed</option>
+                <option value="tidak_tertarik">Tidak Tertarik</option>
+              </select>
+              {/* Filter Skor */}
+              <select
+                className="select select-sm select-bordered bg-base-100 text-base-content"
+                value={scoreLabelFilter}
+                onChange={(e) => setScoreLabelFilter(e.target.value)}
+              >
+                <option value="all">Semua Skor</option>
+                <option value="hot">🔥 Hot</option>
+                <option value="warm">☀️ Warm</option>
+                <option value="cold">❄️ Cold</option>
+                <option value="unreachable">📵 Tidak Bisa Dihubungi</option>
               </select>
               {selectedIndices.size > 0 && (
                 <button onClick={deleteSelected} className="btn btn-sm btn-error btn-outline">Hapus ({selectedIndices.size})</button>
@@ -206,8 +256,10 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
                       />
                     </th>
                     <th>Nama Bisnis</th>
+                    <th>Skor</th>
                     <th>Kontak & Alamat</th>
                     <th>Status CRM</th>
+                    <th>Pipeline</th>
                     <th className="text-center">Aksi WA</th>
                   </tr>
                 </thead>
@@ -229,11 +281,23 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
                           {p.category && <div className="text-xs opacity-60">{p.category}</div>}
                           {p.rating && <div className="badge badge-sm badge-warning mt-1">⭐ {p.rating}</div>}
                         </td>
+                        {/* Score Badge */}
+                        <td className="whitespace-nowrap">
+                          {p.score_label ? (() => {
+                            const cfg = SCORE_BADGE_CONFIG[p.score_label as ScoreLabel];
+                            return cfg ? (
+                              <span className={`badge badge-sm font-bold ${cfg.className}`}>
+                                {cfg.emoji} {cfg.label}
+                              </span>
+                            ) : null;
+                          })() : <span className="text-xs opacity-30">—</span>}
+                        </td>
                         <td>
                           <div className="max-w-xs truncate" title={p.address}>{p.address}</div>
                           {p.phone && <div className="text-xs font-semibold text-primary">{p.phone}</div>}
                           {p.website && <a href={p.website} target="_blank" rel="noreferrer" className="text-xs hover:underline text-info">Website</a>}
                         </td>
+                        {/* CRM Status (lama) */}
                         <td>
                           <select 
                             className={`select select-xs w-full max-w-[140px] font-bold ${
@@ -253,6 +317,28 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
                             <option value="tidak_tertarik">Tidak Tertarik</option>
                             <option value="follow_up">Follow Up</option>
                             <option value="deal">Deal</option>
+                          </select>
+                        </td>
+                        {/* Pipeline Status (baru) */}
+                        <td>
+                          <select
+                            className={`select select-xs w-full max-w-[140px] font-bold ${
+                              p.pipeline_status === 'belum_dihubungi' ? 'select-bordered' :
+                              p.pipeline_status === 'dihubungi' ? 'select-info text-info' :
+                              p.pipeline_status === 'dibalas' ? 'select-warning text-warning' :
+                              p.pipeline_status === 'tertarik' ? 'select-success text-success' :
+                              p.pipeline_status === 'closed' ? 'bg-success text-white' :
+                              p.pipeline_status === 'tidak_tertarik' ? 'select-error text-error' : 'select-bordered'
+                            }`}
+                            value={p.pipeline_status || 'belum_dihubungi'}
+                            onChange={(e) => updatePipelineStatus(p.id, e.target.value)}
+                          >
+                            <option value="belum_dihubungi">Belum Dihubungi</option>
+                            <option value="dihubungi">Dihubungi</option>
+                            <option value="dibalas">Dibalas</option>
+                            <option value="tertarik">Tertarik</option>
+                            <option value="closed">Closed 🎉</option>
+                            <option value="tidak_tertarik">Tidak Tertarik</option>
                           </select>
                         </td>
                         <td className="text-center">

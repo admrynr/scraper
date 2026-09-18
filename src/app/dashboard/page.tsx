@@ -11,6 +11,7 @@ import UpgradeModal from '@/components/UpgradeModal';
 import WaTemplateEditor, { ALL_VARIABLES } from '@/components/WaTemplateEditor';
 import SaveToListModal from '@/components/SaveToListModal';
 import toast from 'react-hot-toast';
+import { SCORE_BADGE_CONFIG, type ScoreLabel } from '@/lib/scoring';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' } | null;
 
@@ -45,6 +46,7 @@ export default function DashboardPage() {
   const [showExportMenu, setShowExportMenu] = useState<null | 'all' | 'selected'>(null);
   const [showWaEditor, setShowWaEditor] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [filterScoreLabel, setFilterScoreLabel] = useState<ScoreLabel | 'all'>('all');
 
   const [maxRows, setMaxRows] = useState(20);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -129,6 +131,7 @@ export default function DashboardPage() {
       if (res.headers.get('X-Quota-Exhausted') === 'true') setError('⚠️ Kuota SerpAPI habis. Admin sedang dihubungi untuk mengganti API key.');
       setResults(data);
       localStorage.setItem('scraperResults', JSON.stringify(data));
+      setFilterScoreLabel('all'); // reset filter skor saat scrape baru
       
       // Deduct credit in UI locally
       if (profile && profile.role !== 'super_admin') {
@@ -155,6 +158,7 @@ export default function DashboardPage() {
     let d = [...results];
     if (filterWebsite) d = d.filter(i => i.website);
     if (filterPhone) d = d.filter(i => i.phone);
+    if (filterScoreLabel !== 'all') d = d.filter(i => i.score_label === filterScoreLabel);
     if (sortConfig) {
       d.sort((a, b) => {
         if (sortConfig.key === 'rating' || sortConfig.key === 'reviews') {
@@ -166,7 +170,7 @@ export default function DashboardPage() {
       });
     }
     return d;
-  }, [results, sortConfig, filterWebsite, filterPhone]);
+  }, [results, sortConfig, filterWebsite, filterPhone, filterScoreLabel]);
 
   const paginatedResults = useMemo(() => processedResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage), [processedResults, currentPage]);
   const totalPages = Math.ceil(processedResults.length / itemsPerPage);
@@ -372,6 +376,27 @@ export default function DashboardPage() {
                   <input type="checkbox" checked={filterPhone} onChange={e => setFilterPhone(e.target.checked)} className="checkbox checkbox-sm checkbox-primary" /> 
                   <span className="label-text font-semibold">Has Phone</span>
                 </label>
+                {/* Score filter chips */}
+                <div className="flex items-center gap-1.5">
+                  {(['all', 'hot', 'warm', 'cold', 'unreachable'] as const).map(sl => {
+                    const isAll = sl === 'all';
+                    const cfg = isAll ? null : SCORE_BADGE_CONFIG[sl];
+                    const active = filterScoreLabel === sl;
+                    return (
+                      <button
+                        key={sl}
+                        onClick={() => setFilterScoreLabel(sl)}
+                        className={`btn btn-xs border transition ${
+                          active
+                            ? isAll ? 'btn-neutral' : `badge ${cfg!.className} border-0 text-white opacity-100`
+                            : 'btn-ghost border-base-300 opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        {isAll ? 'Semua Skor' : `${cfg!.emoji} ${cfg!.label}`}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
@@ -438,6 +463,7 @@ export default function DashboardPage() {
                     <input type="checkbox" checked={isAllPageSelected} ref={el => { if (el) el.indeterminate = isSomePageSelected && !isAllPageSelected; }} onChange={toggleSelectAll} className="checkbox checkbox-sm checkbox-primary" />
                   </th>
                   <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('name')}>Business Name{sortArrow('name')}</th>
+                  <th>Skor</th>
                   <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('rating')}>Rating{sortArrow('rating')}</th>
                   <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('address')}>Alamat{sortArrow('address')}</th>
                   <th className="text-center">Aksi</th>
@@ -455,6 +481,16 @@ export default function DashboardPage() {
                       <td>
                         <div className="font-semibold text-base-content">{item.name}</div>
                         {item.website && <a href={item.website} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-medium" onClick={e => e.stopPropagation()}>Website</a>}
+                      </td>
+                      <td className="whitespace-nowrap">
+                        {item.score_label ? (() => {
+                          const cfg = SCORE_BADGE_CONFIG[item.score_label as ScoreLabel];
+                          return cfg ? (
+                            <span className={`badge badge-sm font-bold ${cfg.className}`}>
+                              {cfg.emoji} {cfg.label}
+                            </span>
+                          ) : null;
+                        })() : <span className="text-xs opacity-30">—</span>}
                       </td>
                       <td className="whitespace-nowrap">
                         {item.rating ? <div className="badge badge-warning badge-sm gap-1 font-semibold">⭐ {item.rating}</div> : <span className="text-base-content/40 text-xs">—</span>}

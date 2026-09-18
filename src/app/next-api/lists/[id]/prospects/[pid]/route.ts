@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+const VALID_PIPELINE_STATUSES = [
+  'belum_dihubungi',
+  'dihubungi',
+  'dibalas',
+  'tertarik',
+  'closed',
+  'tidak_tertarik',
+] as const;
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; pid: string }> }
@@ -14,11 +23,23 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const { status, notes } = body;
+  const { status, notes, pipeline_status } = body;
 
   const updateData: any = {};
   if (status !== undefined) updateData.status = status;
   if (notes !== undefined) updateData.notes = notes;
+
+  // pipeline_status: validasi enum lalu set timestamp
+  if (pipeline_status !== undefined) {
+    if (!VALID_PIPELINE_STATUSES.includes(pipeline_status)) {
+      return NextResponse.json(
+        { error: `pipeline_status tidak valid. Pilih salah satu: ${VALID_PIPELINE_STATUSES.join(', ')}` },
+        { status: 400 }
+      );
+    }
+    updateData.pipeline_status = pipeline_status;
+    updateData.pipeline_status_updated_at = new Date().toISOString();
+  }
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: 'No data to update' }, { status: 400 });
