@@ -60,7 +60,7 @@ JIKA phone == null/kosong → score_label = "Tidak Bisa Dihubungi" (skip perhitu
 | Tidak ada website | `url == null` | +20 |
 | Profil belum diklaim | `is_claimed == false` | +15 |
 | Jam operasional lengkap | `work_hours` terisi penuh (7 hari) | +10 |
-| Kategori bisnis cocok dengan keyword campaign | exact/partial match | +10 |
+| Keyword cocok dengan nama bisnis | `keyword_used` (partial match) di `name` bisnis — proxy karena DataForSEO Maps tidak menjamin field `category` tersedia di setiap item | +10 |
 | Punya foto profil | `main_image` tidak kosong | +5 |
 
 *(Bobot di atas adalah starting point — sebaiknya dibuat sebagai konstanta terpisah/config, bukan hardcoded, supaya bisa di-tuning tanpa redeploy penuh.)*

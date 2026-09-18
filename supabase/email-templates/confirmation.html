@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Konfirmasi Email – Prospekto</title>
   <style>
     /* Reset */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       background-color: #f7f7f5;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -27,7 +33,7 @@
       border-radius: 16px;
       border: 1px solid #e2e8f0;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
     }
 
     /* Header accent bar */
@@ -60,12 +66,11 @@
       background-color: #fff3ee;
       border: 2px solid #ffd9c8;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       margin: 0 auto 24px;
       font-size: 28px;
-      line-height: 1;
+      line-height: 60px;
+      text-align: center;
+      display: block;
     }
 
     .email-title {
@@ -191,14 +196,29 @@
 
     /* Mobile */
     @media (max-width: 600px) {
-      .email-body { padding: 32px 24px 24px; }
-      .email-logo-area { padding: 24px 24px 20px; }
-      .email-footer { padding: 16px 24px 20px; }
-      .feature-list { grid-template-columns: 1fr; }
-      .email-title { font-size: 20px; }
+      .email-body {
+        padding: 32px 24px 24px;
+      }
+
+      .email-logo-area {
+        padding: 24px 24px 20px;
+      }
+
+      .email-footer {
+        padding: 16px 24px 20px;
+      }
+
+      .feature-list {
+        grid-template-columns: 1fr;
+      }
+
+      .email-title {
+        font-size: 20px;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="email-wrapper">
     <div class="email-container">
@@ -208,11 +228,7 @@
 
       <!-- Logo -->
       <div class="email-logo-area">
-        <img
-          src="https://cariprospek.vercel.app/prospekto-logo.png"
-          alt="Prospekto"
-          class="logo-img"
-        />
+        <img src="https://prospekto.id/prospekto-logo.png" alt="Prospekto" class="logo-img" />
       </div>
 
       <!-- Body -->
@@ -222,7 +238,8 @@
 
         <h1 class="email-title">Satu langkah lagi untuk memulai!</h1>
         <p class="email-subtitle">
-          Konfirmasi email kamu untuk mengaktifkan akun dan mulai menemukan ratusan prospek bisnis lokal — gratis setiap hari.
+          Konfirmasi email kamu untuk mengaktifkan akun dan mulai menemukan ratusan prospek bisnis lokal — gratis setiap
+          hari.
         </p>
 
         <div class="cta-wrapper">
@@ -235,7 +252,7 @@
         <div class="feature-strip">
           <div class="feature-strip-title">Yang kamu dapatkan setelah konfirmasi</div>
           <ul class="feature-list">
-            <li>5x scrape gratis per hari</li>
+            <li>Gratis hingga 100 leads</li>
             <li>Data dari Google Maps</li>
             <li>Target sampai kelurahan</li>
             <li>Filter & sorting cerdas</li>
@@ -256,11 +273,12 @@
         <p>
           Email ini dikirim ke <strong>{{ .Email }}</strong> karena kamu mendaftar di Prospekto.<br />
           Jika bukan kamu, abaikan email ini — akun tidak akan diaktifkan.<br /><br />
-          © 2026 Prospekto · <a href="{{ .SiteURL }}">prospekto.com</a>
+          © 2026 Prospekto · <a href="{{ .SiteURL }}">prospekto.id</a>
         </p>
       </div>
 
     </div>
   </div>
 </body>
+
 </html>

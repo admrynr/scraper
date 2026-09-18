@@ -30,7 +30,7 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: only light;
   --primary: #FF642D;
   --primary-content: #ffffff;
   --secondary: #4F46E5;
