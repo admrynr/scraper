@@ -22,7 +22,16 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   const [statusFilter, setStatusFilter] = useState('all');         // CRM status (lama)
   const [scoreLabelFilter, setScoreLabelFilter] = useState('all'); // score label filter
   const [pipelineFilter, setPipelineFilter] = useState('all');     // pipeline status filter
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState<Set<string>>(new Set());
+
+  const isFilterActive = statusFilter !== 'all' || pipelineFilter !== 'all' || scoreLabelFilter !== 'all';
+  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (pipelineFilter !== 'all' ? 1 : 0) + (scoreLabelFilter !== 'all' ? 1 : 0);
+  const handleResetFilters = () => {
+    setStatusFilter('all');
+    setPipelineFilter('all');
+    setScoreLabelFilter('all');
+  };
   
   const [waTemplate, setWaTemplate] = useState('Halo {name}, perkenalkan kami dari ...');
 
@@ -187,46 +196,40 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
         <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 overflow-hidden">
           <div className="p-4 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-base-200/30">
             <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
-              {/* Filter CRM Status (lama) */}
-              <select 
-                className="select select-sm select-bordered bg-base-100 text-base-content" 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">Semua Status CRM</option>
-                <option value="belum_dihubungi">Belum Dihubungi</option>
-                <option value="sudah_dihubungi">Sudah Dihubungi</option>
-                <option value="tertarik">Tertarik</option>
-                <option value="tidak_tertarik">Tidak Tertarik</option>
-                <option value="follow_up">Follow Up</option>
-                <option value="deal">Deal</option>
-              </select>
-              {/* Filter Pipeline Status (baru) */}
-              <select
-                className="select select-sm select-bordered bg-base-100 text-base-content"
-                value={pipelineFilter}
-                onChange={(e) => setPipelineFilter(e.target.value)}
-              >
-                <option value="all">Semua Pipeline</option>
-                <option value="belum_dihubungi">Belum Dihubungi</option>
-                <option value="dihubungi">Dihubungi</option>
-                <option value="dibalas">Dibalas</option>
-                <option value="tertarik">Tertarik</option>
-                <option value="closed">Closed</option>
-                <option value="tidak_tertarik">Tidak Tertarik</option>
-              </select>
-              {/* Filter Skor */}
-              <select
-                className="select select-sm select-bordered bg-base-100 text-base-content"
-                value={scoreLabelFilter}
-                onChange={(e) => setScoreLabelFilter(e.target.value)}
-              >
-                <option value="all">Semua Skor</option>
-                <option value="hot">🔥 Hot</option>
-                <option value="warm">☀️ Warm</option>
-                <option value="cold">❄️ Cold</option>
-                <option value="unreachable">📵 Tidak Bisa Dihubungi</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setShowFilterModal(true)} 
+                  className={`btn btn-sm ${isFilterActive ? 'btn-primary text-white shadow-sm' : 'btn-outline bg-base-100'}`}
+                >
+                  {isFilterActive ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                  )}
+                  Filter Data
+                  {isFilterActive && (
+                    <span className="badge badge-xs bg-white text-primary font-bold ml-1">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+                {isFilterActive && (
+                  <button 
+                    onClick={handleResetFilters} 
+                    className="btn btn-sm btn-ghost text-error hover:bg-error/10 gap-1"
+                    title="Hapus / Reset semua filter"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    Reset Filter
+                  </button>
+                )}
+              </div>
               {selectedIndices.size > 0 && (
                 <button onClick={deleteSelected} className="btn btn-sm btn-error btn-outline">Hapus ({selectedIndices.size})</button>
               )}
@@ -358,6 +361,109 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
         </div>
 
       </div>
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <dialog className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">Filter Data</h3>
+              {isFilterActive && (
+                <button 
+                  onClick={handleResetFilters} 
+                  className="btn btn-xs btn-ghost text-error hover:bg-error/10"
+                >
+                  Reset Semua Filter
+                </button>
+              )}
+            </div>
+            
+            <div className="flex flex-col gap-6">
+              
+              {/* Filter Status (CRM & Pipeline) */}
+              <div>
+                <h4 className="text-sm font-semibold text-base-content/70 mb-3 uppercase">Status</h4>
+                <div className="flex flex-col gap-4">
+                  
+                  {/* Status CRM Lama */}
+                  <div>
+                    <div className="text-xs mb-1 opacity-70">Status CRM</div>
+                    <div className="flex overflow-x-auto pb-1 gap-2 no-scrollbar">
+                      {['all', 'belum_dihubungi', 'sudah_dihubungi', 'tertarik', 'tidak_tertarik', 'follow_up', 'deal'].map(status => (
+                        <button 
+                          key={status}
+                          onClick={() => setStatusFilter(status)} 
+                          className={`btn btn-sm shrink-0 ${statusFilter === status ? 'btn-primary' : 'btn-outline border-base-300 hover:border-primary'}`}
+                        >
+                          {status === 'all' ? 'Semua' : status.replace('_', ' ')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Pipeline Status Baru */}
+                  <div>
+                    <div className="text-xs mb-1 opacity-70">Pipeline Status</div>
+                    <div className="flex overflow-x-auto pb-1 gap-2 no-scrollbar">
+                      {['all', 'belum_dihubungi', 'dihubungi', 'dibalas', 'tertarik', 'closed', 'tidak_tertarik'].map(status => (
+                        <button 
+                          key={status}
+                          onClick={() => setPipelineFilter(status)} 
+                          className={`btn btn-sm shrink-0 ${pipelineFilter === status ? 'btn-primary' : 'btn-outline border-base-300 hover:border-primary'}`}
+                        >
+                          {status === 'all' ? 'Semua' : status === 'closed' ? 'Closed 🎉' : status.replace('_', ' ')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Filter Skor */}
+              <div>
+                <h4 className="text-sm font-semibold text-base-content/70 mb-3 uppercase">Skor Kualitas</h4>
+                <div className="flex overflow-x-auto pb-1 gap-2 no-scrollbar">
+                  {(['all', 'hot', 'warm', 'cold', 'unreachable'] as const).map(sl => {
+                    const isAll = sl === 'all';
+                    const cfg = isAll ? null : SCORE_BADGE_CONFIG[sl];
+                    const active = scoreLabelFilter === sl;
+                    return (
+                      <button
+                        key={sl}
+                        onClick={() => setScoreLabelFilter(sl)}
+                        className={`btn btn-sm shrink-0 transition ${
+                          active
+                            ? isAll ? 'btn-neutral' : `badge ${cfg!.className} border-0 text-white`
+                            : 'btn-outline border-base-300 hover:border-primary opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        {isAll ? 'Semua Skor' : `${cfg!.emoji} ${cfg!.label}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-action flex justify-between items-center">
+              {isFilterActive ? (
+                <button 
+                  onClick={handleResetFilters} 
+                  className="btn btn-sm btn-ghost text-error hover:bg-error/10"
+                >
+                  Reset Filter
+                </button>
+              ) : <div />}
+              <button onClick={() => setShowFilterModal(false)} className="btn btn-primary px-8">Tutup & Terapkan</button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setShowFilterModal(false)}>close</button>
+          </form>
+        </dialog>
+      )}
+
     </div>
   );
 }

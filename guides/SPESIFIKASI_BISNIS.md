@@ -53,7 +53,7 @@ Fitur sentral dari aplikasi ini, dirancang spesifik untuk struktur wilayah admin
 
 ### 3.3. Manajemen Hasil Prospek (Leads Management)
 Data yang telah berhasil diekstraksi ditampilkan di antarmuka yang modern, responsif, dan data-sentris (terinspirasi dari *Semrush visual style*).
-*   **Filter & Sorting:** Pengguna dapat dengan cepat menyaring data hanya yang memiliki "Nomor Telepon" atau "Website", serta mengurutkan berdasarkan nama, rating, atau jumlah ulasan.
+*   **Filter & Sorting:** Pengguna dapat menyaring data berdasarkan: ada/tidaknya "Nomor Telepon", ada/tidaknya "Website", serta **Label Skor (Hot/Warm/Cold)**. Setiap filter dikemas dalam popup modal interaktif. Tombol filter berubah tampilan (solid + badge angka) saat filter sedang aktif, dan terdapat tombol **Reset Filter** untuk menghapus semua filter sekaligus.
 *   **Penyimpanan Sesi (Local Storage):** Data hasil *scraping* tersimpan sementara di browser, sehingga tidak hilang jika halaman ter-*refresh* secara tidak sengaja.
 *   **Bulk Selection & Export:** Pengguna dapat memilih (*check*) prospek tertentu, atau seluruh halaman, lalu mengekspornya ke format **Excel (.xlsx)** maupun **CSV**.
 *   **Simpan ke List *(Premium)*:** Setelah mencentang satu atau lebih prospek, pengguna premium dapat menekan tombol **"Simpan ke List"** untuk menyimpan prospek pilihan ke *Campaign/List* yang dikelola di Dashboard. Tombol ini tidak muncul bagi pengguna Free.
@@ -137,6 +137,67 @@ Sistem mendeteksi duplikat berdasarkan kombinasi `place_id` (ID unik dari Google
 **Contoh notifikasi:** *"✅ 13 prospek berhasil disimpan. 2 prospek dilewati (sudah ada di List ini)."*
 
 ---
+
+### 3.7. 🆕 Lead Scoring Otomatis & Pipeline Status Manual
+
+Fitur ini secara otomatis menilai kualitas setiap prospek yang tersimpan di dalam sebuah List, sehingga tim sales dapat memprioritaskan prospek yang paling layak dihubungi terlebih dahulu.
+
+#### 3.7.1. Dua Komponen yang Independen
+
+| | Lead Scoring | Pipeline Status |
+|---|---|---|
+| **Menjawab pertanyaan** | "Siapa yang layak dihubungi duluan?" | "Sudah sejauh mana saya follow-up lead ini?" |
+| **Dihitung/diisi oleh** | Sistem, otomatis saat simpan ke List | User, manual lewat dropdown inline di tabel |
+| **Kapan terjadi** | Saat prospek disimpan dari hasil scrape | Setelah user bertindak (chat WA, follow-up, dsb.) |
+
+#### 3.7.2. Formula Scoring (Skala 0–100)
+
+Skor dihitung dari kombinasi sinyal-sinyal berikut:
+
+| Sinyal | Kondisi | Poin |
+|---|---|---|
+| Rating tinggi & terverifikasi | `rating >= 4.0` DAN `reviews >= 10` | +30 |
+| Rating sedang | `rating >= 3.0` DAN `reviews >= 5` | +15 |
+| Review sangat sedikit | `reviews < 5` | +5 |
+| Tidak ada website | `website == null` | +20 |
+| Ada nomor telepon | `phone != null` | +10 |
+| Ada rating (profil aktif) | `rating != null` | +5 |
+
+**Syarat Mutlak (Hard Filter):**
+*   Jika `phone == null/kosong` → `score_label = "unreachable"` (tidak masuk perhitungan poin).
+*   Jika prospek tidak memenuhi syarat minimum → `score_label = "cold"`.
+
+**Pemetaan ke Label:**
+```
+score >= 55        → "hot"   🔥
+35 <= score < 55   → "warm"  ☀️
+score < 35         → "cold"  🧊
+phone == null      → "unreachable"  📵
+```
+
+#### 3.7.3. Pipeline Status Manual
+
+Merupakan sistem pelacak kemajuan follow-up yang diisi sepenuhnya oleh pengguna. Tersedia sebagai **dropdown inline** langsung di baris tabel prospek, tanpa perlu membuka modal.
+
+| Status | Keterangan |
+|---|---|
+| `belum_dihubungi` | Default. Prospek belum dihubungi sama sekali. |
+| `dihubungi` | Pesan WA/email sudah dikirim, menunggu balasan. |
+| `dibalas` | Prospek sudah membalas. |
+| `tertarik` | Prospek menunjukkan minat serius. |
+| `closed` | Deal berhasil ditutup! 🎉 |
+| `tidak_tertarik` | Prospek menolak atau tidak merespons lebih lanjut. |
+
+#### 3.7.4. Tampilan UI
+
+*   **Badge Skor:** Ditampilkan sebagai chip berwarna di kolom skor pada tabel prospek.
+    *   🔥 **Hot** — merah/oranye
+    *   ☀️ **Warm** — kuning/amber
+    *   🧊 **Cold** — biru muda
+    *   📵 **Unreachable** — abu-abu
+*   **Filter Aktif:** Tombol "Filter Data" berubah menjadi solid berwarna primer + badge angka jumlah filter aktif. Tombol "Reset Filter" muncul di samping untuk menghapus semua filter sekaligus.
+*   **Dropdown Pipeline:** Editable inline langsung di baris tabel, warna dropdown menyesuaikan status yang dipilih (contoh: `deal` = hijau penuh).
+*   **Sorting Default:** Tabel diurutkan berdasarkan `score` descending saat pertama kali prospek dimuat (prioritas tertinggi di atas).
 
 ### 3.6. 🆕 Sistem Kredit, Konsumsi Baris Data & Kebijakan Monetisasi
 
@@ -226,9 +287,13 @@ Dua tabel baru ditambahkan ke Supabase dengan proteksi **Row Level Security (RLS
 | `rating` | `numeric` (nullable) | Rating Google Maps |
 | `reviews` | `integer` (nullable) | Jumlah ulasan |
 | `maps_url` | `text` (nullable) | Link Google Maps |
-| `status` | `text` | Label: `belum_dihubungi` \| `sudah_dihubungi` \| `tertarik` \| `tidak_tertarik` \| `follow_up` \| `deal` (default: `belum_dihubungi`) |
+| `status` | `text` | Label CRM lama: `belum_dihubungi` \| `sudah_dihubungi` \| `tertarik` \| `tidak_tertarik` \| `follow_up` \| `deal` (default: `belum_dihubungi`) |
 | `notes` | `text` (nullable) | Catatan pribadi user untuk prospek ini |
 | `saved_at` | `timestamptz` | Waktu disimpan ke List |
+| 🆕 `score` | `integer` (nullable) | Skor kualitas numerik (0–100), dihitung otomatis saat simpan |
+| 🆕 `score_label` | `text` (nullable) | Label skor: `hot` \| `warm` \| `cold` \| `unreachable`. Hanya writable oleh backend/service role. |
+| 🆕 `pipeline_status` | `text` | Status pipeline manual oleh user: `belum_dihubungi` \| `dihubungi` \| `dibalas` \| `tertarik` \| `closed` \| `tidak_tertarik` (default: `belum_dihubungi`) |
+| 🆕 `pipeline_status_updated_at` | `timestamptz` (nullable) | Timestamp terakhir kali user mengubah pipeline status |
 
 **Constraint unik:** `UNIQUE(list_id, place_id)` — mencegah duplikat pada level database.
 
@@ -250,8 +315,10 @@ Semua endpoint di bawah ini **memvalidasi status Premium** sebelum memproses req
 | `DELETE` | `/next-api/lists/[id]` | Hapus List beserta semua isinya |
 | `GET` | `/next-api/lists/[id]/prospects` | Ambil semua prospek dalam sebuah List (dengan filter & paginasi) |
 | `POST` | `/next-api/lists/[id]/prospects` | Simpan satu atau lebih prospek ke List (dengan logika skip duplikat) |
-| `PATCH` | `/next-api/lists/[id]/prospects/[pid]` | Update status/label atau catatan satu prospek |
+| `PATCH` | `/next-api/lists/[id]/prospects/[pid]` | Update status CRM, catatan, atau **pipeline_status** satu prospek |
 | `DELETE` | `/next-api/lists/[id]/prospects` | Hapus satu atau beberapa prospek dari List (body: array of prospect `id`) |
+
+> **Catatan Scoring:** Skor (`score` & `score_label`) dihitung otomatis oleh sistem saat prospek disimpan (`POST /next-api/lists/[id]/prospects`), menggunakan formula berbasis `rating`, `reviews`, `phone`, dan `website`. Tidak ada endpoint khusus untuk re-scoring — skor bersifat *immutable* setelah disimpan (fitur "Re-score" direncanakan sebagai fitur premium di iterasi berikutnya). Kolom `score` dan `score_label` **hanya dapat diubah oleh service role** — tidak dapat dimanipulasi langsung oleh user dari sisi klien.
 
 ---
 
@@ -295,9 +362,13 @@ Untuk menjaga efisiensi biaya operasional (kuota SerpAPI) dan memberikan pengala
 ## 5. Pengembangan Lanjutan (Future Roadmap)
 *   ~~**Manajemen Lisensi / Paket Berlangganan (Billing):** Integrasi *payment gateway* (Midtrans) untuk monetisasi berbasis *credits* dan fitur premium.~~ *(Selesai)*
 *   ~~**Cloud CRM Storage:** Mengizinkan pengguna untuk menyimpan "Daftar Prospek" ke database Supabase agar tidak hilang saat berganti perangkat.~~ *(Selesai — lihat Fitur 3.5)*
-*   **Notifikasi & Pengingat Follow-Up:** Kirim email pengingat otomatis ke user untuk prospek yang sudah lama berstatus `follow_up`.
+*   ~~**Lead Scoring Otomatis & Pipeline Status Manual:** Sistem penilaian kualitas prospek berbasis sinyal data (rating, reviews, website, phone) dengan label Hot/Warm/Cold/Unreachable, dan sistem pelacak kemajuan follow-up berbasis pipeline yang diisi manual oleh user.~~ *(Selesai — lihat Fitur 3.7)*
+*   **Filter Lanjutan & Smart Sort:** Filter modal berbasis popup (sudah diimplementasikan). Iterasi berikutnya: filter berdasarkan rentang rating, tanggal disimpan, dan Smart Sort berdasarkan kombinasi skor + pipeline.
+*   **Notifikasi & Pengingat Follow-Up:** Kirim email pengingat otomatis ke user untuk prospek yang sudah lama berstatus `follow_up` atau `dihubungi` tanpa update.
+*   **Re-Score Manual (Premium):** Fitur opsional untuk men-trigger ulang perhitungan skor prospek yang sudah tersimpan, berguna jika formula scoring diperbarui.
+*   **Tooltip Alasan Skor:** Tooltip di badge skor yang menjelaskan sinyal mana yang berkontribusi pada skor tersebut (mis. *"Skor tinggi karena: rating bagus, belum ada website"*) — membantu user memahami *why* di balik prioritas.
 *   **Import Prospek Eksternal:** Izinkan user mengunggah file Excel/CSV untuk mengimpor prospek dari sumber luar ke dalam sebuah List.
 *   **Tier Harga Lanjutan (Advanced Pricing Tiers):** Diferensiasi paket berdasarkan jumlah Campaign yang diizinkan (misalnya: Starter = 10, Pro = 50, Business = Unlimited). Batasan 10 Campaign saat ini sudah dirancang sebagai batas tier Starter.
-*   **AI Auto-Outreach:** Integrasi dengan OpenAI untuk mempersonalisasi *template* pesan penawaran berdasarkan nama dan kategori bisnis yang sedang diekstraksi.
+*   **AI Auto-Outreach:** Integrasi dengan OpenAI untuk mempersonalisasi *template* pesan penawaran berdasarkan nama, kategori, dan data skor bisnis yang sedang diekstraksi.
 *   **Kolaborasi Tim:** Izinkan satu List dibagikan kepada beberapa anggota tim (multi-user access per List).
 

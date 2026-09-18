@@ -40,13 +40,23 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
-  const [filterWebsite, setFilterWebsite] = useState(false);
-  const [filterPhone, setFilterPhone] = useState(false);
+  const [filterWebsite, setFilterWebsite] = useState<'all' | 'has' | 'none'>('all');
+  const [filterPhone, setFilterPhone] = useState<'all' | 'has' | 'none'>('all');
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
   const [showExportMenu, setShowExportMenu] = useState<null | 'all' | 'selected'>(null);
   const [showWaEditor, setShowWaEditor] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [filterScoreLabel, setFilterScoreLabel] = useState<ScoreLabel | 'all'>('all');
+
+  const isFilterActive = filterWebsite !== 'all' || filterPhone !== 'all' || filterScoreLabel !== 'all';
+  const activeFilterCount = (filterWebsite !== 'all' ? 1 : 0) + (filterPhone !== 'all' ? 1 : 0) + (filterScoreLabel !== 'all' ? 1 : 0);
+  const handleResetFilters = () => {
+    setFilterWebsite('all');
+    setFilterPhone('all');
+    setFilterScoreLabel('all');
+    setCurrentPage(1);
+  };
 
   const [maxRows, setMaxRows] = useState(20);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -156,8 +166,10 @@ export default function DashboardPage() {
 
   const processedResults = useMemo(() => {
     let d = [...results];
-    if (filterWebsite) d = d.filter(i => i.website);
-    if (filterPhone) d = d.filter(i => i.phone);
+    if (filterWebsite === 'has') d = d.filter(i => i.website);
+    if (filterWebsite === 'none') d = d.filter(i => !i.website);
+    if (filterPhone === 'has') d = d.filter(i => i.phone);
+    if (filterPhone === 'none') d = d.filter(i => !i.phone);
     if (filterScoreLabel !== 'all') d = d.filter(i => i.score_label === filterScoreLabel);
     if (sortConfig) {
       d.sort((a, b) => {
@@ -367,36 +379,39 @@ export default function DashboardPage() {
                 Hasil ({processedResults.length} / {results.length})
                 {selectedIndices.size > 0 && <div className="badge badge-primary ml-2">{selectedIndices.size} dipilih</div>}
               </h2>
-              <div className="flex items-center gap-4 text-sm">
-                <label className="label cursor-pointer justify-start gap-2 border border-base-300 px-3 py-1.5 rounded-md hover:bg-base-200/50 transition bg-base-100">
-                  <input type="checkbox" checked={filterWebsite} onChange={e => setFilterWebsite(e.target.checked)} className="checkbox checkbox-sm checkbox-primary" /> 
-                  <span className="label-text font-semibold">Has Website</span>
-                </label>
-                <label className="label cursor-pointer justify-start gap-2 border border-base-300 px-3 py-1.5 rounded-md hover:bg-base-200/50 transition bg-base-100">
-                  <input type="checkbox" checked={filterPhone} onChange={e => setFilterPhone(e.target.checked)} className="checkbox checkbox-sm checkbox-primary" /> 
-                  <span className="label-text font-semibold">Has Phone</span>
-                </label>
-                {/* Score filter chips */}
-                <div className="flex items-center gap-1.5">
-                  {(['all', 'hot', 'warm', 'cold', 'unreachable'] as const).map(sl => {
-                    const isAll = sl === 'all';
-                    const cfg = isAll ? null : SCORE_BADGE_CONFIG[sl];
-                    const active = filterScoreLabel === sl;
-                    return (
-                      <button
-                        key={sl}
-                        onClick={() => setFilterScoreLabel(sl)}
-                        className={`btn btn-xs border transition ${
-                          active
-                            ? isAll ? 'btn-neutral' : `badge ${cfg!.className} border-0 text-white opacity-100`
-                            : 'btn-ghost border-base-300 opacity-60 hover:opacity-100'
-                        }`}
-                      >
-                        {isAll ? 'Semua Skor' : `${cfg!.emoji} ${cfg!.label}`}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setShowFilterModal(true)} 
+                  className={`btn btn-sm ${isFilterActive ? 'btn-primary text-white shadow-sm' : 'btn-outline bg-base-100'}`}
+                >
+                  {isFilterActive ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                  )}
+                  Filter Data
+                  {isFilterActive && (
+                    <span className="badge badge-xs bg-white text-primary font-bold ml-1">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+                {isFilterActive && (
+                  <button 
+                    onClick={handleResetFilters} 
+                    className="btn btn-sm btn-ghost text-error hover:bg-error/10 gap-1"
+                    title="Hapus / Reset semua filter"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    Reset Filter
+                  </button>
+                )}
               </div>
             </div>
             <div className="flex gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
@@ -546,6 +561,125 @@ export default function DashboardPage() {
         }}
         selectedData={selectedData}
       />
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <dialog className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">Filter Data</h3>
+              {isFilterActive && (
+                <button 
+                  onClick={handleResetFilters} 
+                  className="btn btn-xs btn-ghost text-error hover:bg-error/10"
+                >
+                  Reset Semua Filter
+                </button>
+              )}
+            </div>
+            
+            <div className="flex flex-col gap-6">
+              {/* Filter Kontak */}
+              <div>
+                <h4 className="text-sm font-semibold text-base-content/70 mb-3 uppercase">Kontak & Info</h4>
+                <div className="flex flex-col gap-4">
+                  
+                  {/* Website Filter */}
+                  <div>
+                    <div className="text-xs mb-1 opacity-70">Website</div>
+                    <div className="flex overflow-x-auto pb-1 gap-2 no-scrollbar">
+                      <button 
+                        onClick={() => setFilterWebsite('all')} 
+                        className={`btn btn-sm shrink-0 ${filterWebsite === 'all' ? 'btn-primary' : 'btn-outline border-base-300 hover:border-primary'}`}
+                      >
+                        Semua
+                      </button>
+                      <button 
+                        onClick={() => setFilterWebsite('has')} 
+                        className={`btn btn-sm shrink-0 ${filterWebsite === 'has' ? 'btn-primary' : 'btn-outline border-base-300 hover:border-primary'}`}
+                      >
+                        Ada Website
+                      </button>
+                      <button 
+                        onClick={() => setFilterWebsite('none')} 
+                        className={`btn btn-sm shrink-0 ${filterWebsite === 'none' ? 'btn-primary' : 'btn-outline border-base-300 hover:border-primary'}`}
+                      >
+                        Tidak Ada Website
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Phone Filter */}
+                  <div>
+                    <div className="text-xs mb-1 opacity-70">Nomor HP</div>
+                    <div className="flex overflow-x-auto pb-1 gap-2 no-scrollbar">
+                      <button 
+                        onClick={() => setFilterPhone('all')} 
+                        className={`btn btn-sm shrink-0 ${filterPhone === 'all' ? 'btn-primary' : 'btn-outline border-base-300 hover:border-primary'}`}
+                      >
+                        Semua
+                      </button>
+                      <button 
+                        onClick={() => setFilterPhone('has')} 
+                        className={`btn btn-sm shrink-0 ${filterPhone === 'has' ? 'btn-primary' : 'btn-outline border-base-300 hover:border-primary'}`}
+                      >
+                        Ada No. HP
+                      </button>
+                      <button 
+                        onClick={() => setFilterPhone('none')} 
+                        className={`btn btn-sm shrink-0 ${filterPhone === 'none' ? 'btn-primary' : 'btn-outline border-base-300 hover:border-primary'}`}
+                      >
+                        Tidak Ada No. HP
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Filter Skor */}
+              <div>
+                <h4 className="text-sm font-semibold text-base-content/70 mb-3 uppercase">Skor Kualitas</h4>
+                <div className="flex overflow-x-auto pb-1 gap-2 no-scrollbar">
+                  {(['all', 'hot', 'warm', 'cold', 'unreachable'] as const).map(sl => {
+                    const isAll = sl === 'all';
+                    const cfg = isAll ? null : SCORE_BADGE_CONFIG[sl];
+                    const active = filterScoreLabel === sl;
+                    return (
+                      <button
+                        key={sl}
+                        onClick={() => setFilterScoreLabel(sl)}
+                        className={`btn btn-sm shrink-0 transition ${
+                          active
+                            ? isAll ? 'btn-neutral' : `badge ${cfg!.className} border-0 text-white`
+                            : 'btn-outline border-base-300 hover:border-primary opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        {isAll ? 'Semua Skor' : `${cfg!.emoji} ${cfg!.label}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-action flex justify-between items-center">
+              {isFilterActive ? (
+                <button 
+                  onClick={handleResetFilters} 
+                  className="btn btn-sm btn-ghost text-error hover:bg-error/10"
+                >
+                  Reset Filter
+                </button>
+              ) : <div />}
+              <button onClick={() => setShowFilterModal(false)} className="btn btn-primary px-8">Tutup & Terapkan</button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setShowFilterModal(false)}>close</button>
+          </form>
+        </dialog>
+      )}
     </div>
   );
 }
