@@ -111,7 +111,7 @@ export default async function Home() {
                 <div className="bg-base-200/60 border-t border-base-300 flex justify-center overflow-hidden">
                   <iframe
                     src="/prospekto-video.html"
-                    className="w-full aspect-video border-0"
+                    className="w-full aspect-[9/16] md:aspect-video border-0"
                     title="Prospekto Demo Video"
                     allowFullScreen
                   />
