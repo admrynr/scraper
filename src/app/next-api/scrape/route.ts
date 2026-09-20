@@ -56,22 +56,26 @@ interface PlaceResult {
  */
 async function fetchDfsPage(
   searchQuery: string,
-  depth: number
+  depth: number,
+  locationCode: number | null,
+  locationName: string | null,
+  languageCode: string | null
 ): Promise<any> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), DFS_FETCH_TIMEOUT_MS);
 
-  const body = JSON.stringify([
-    {
-      keyword: searchQuery,
-      location_code: 2360,   // Indonesia
-      language_code: 'id',   // Bahasa Indonesia
-      device: 'desktop',
-      os: 'windows',
-      depth: depth,
-      search_places: true,
-    },
-  ]);
+  const requestBody: any = {
+    keyword: searchQuery,
+    device: 'desktop',
+    os: 'windows',
+    depth: depth,
+    search_places: true,
+  };
+  if (locationCode) requestBody.location_code = locationCode;
+  if (locationName) requestBody.location_name = locationName;
+  if (languageCode) requestBody.language_code = languageCode;
+
+  const body = JSON.stringify([requestBody]);
 
   try {
     const response = await fetch(
@@ -257,10 +261,26 @@ export async function POST(request: NextRequest) {
     village = '',
     province = '',
     maxRows: requestedMaxRows = 20,
+    searchType = 'local',
+    globalCountry = '',
+    globalCity = '',
   } = body;
 
-  if (!keyword || !city) {
-    return NextResponse.json({ error: 'Keyword dan kota wajib diisi.' }, { status: 400 });
+  if (!keyword) {
+    return NextResponse.json({ error: 'Keyword wajib diisi.' }, { status: 400 });
+  }
+  if (searchType === 'local' && !city) {
+    return NextResponse.json({ error: 'Kota wajib diisi untuk pencarian lokal.' }, { status: 400 });
+  }
+  if (searchType === 'global' && (!globalCountry || !globalCity)) {
+    return NextResponse.json({ error: 'Negara dan Kota wajib diisi untuk pencarian global.' }, { status: 400 });
+  }
+
+  if (searchType === 'global' && !isSuperAdmin && !isActivated) {
+    return NextResponse.json(
+      { error: 'Pencarian global hanya tersedia untuk pengguna premium (sudah aktivasi).' },
+      { status: 403 }
+    );
   }
 
   let effectiveMaxRows: number = Math.min(requestedMaxRows, MAX_SCRAPE_ROWS);
@@ -322,15 +342,30 @@ export async function POST(request: NextRequest) {
   }
 
   // ─── 7. Build query & cache key ───────────────────────────────────────────
-  const locationParts: string[] = [];
-  if (village) locationParts.push(village);
-  if (district) locationParts.push(district);
-  locationParts.push(city);
-  if (province) locationParts.push(province);
-  const locationStr = locationParts.join(', ');
+  let locationStr = '';
+  let locationCode: number | null = null;
+  let locationName: string | null = null;
+  let languageCode: string | null = null;
+  let queryConnector = '';
+
+  if (searchType === 'local') {
+    const locationParts: string[] = [];
+    if (village) locationParts.push(village);
+    if (district) locationParts.push(district);
+    if (city) locationParts.push(city);
+    if (province) locationParts.push(province);
+    locationStr = locationParts.join(', ');
+    locationCode = 2360;
+    languageCode = 'id';
+    queryConnector = 'di';
+  } else {
+    locationStr = `${globalCity}, ${globalCountry}`;
+    locationName = locationStr;
+    queryConnector = 'in';
+  }
 
   const keywordsList = keyword.split(',').map((k: string) => k.trim()).filter(Boolean);
-  const searchQuery = `${keywordsList[0]} di ${locationStr}`;
+  const searchQuery = `${keywordsList[0]} ${queryConnector} ${locationStr}`;
 
   // Cache key = full query string lowercase (shared antar semua user)
   const cacheKey = searchQuery.toLowerCase();
@@ -362,7 +397,7 @@ export async function POST(request: NextRequest) {
 
     let task: any;
     try {
-      task = await fetchDfsPage(searchQuery, depthNeeded);
+      task = await fetchDfsPage(searchQuery, depthNeeded, locationCode, locationName, languageCode);
     } catch (err: any) {
       if (err.message === 'TIMEOUT') {
         partialReturn = true;
@@ -378,7 +413,12 @@ export async function POST(request: NextRequest) {
     const pageItems = allItems.slice(offset, offset + ROWS_PER_CREDIT);
     const isEndOfResults = pageItems.length === 0 || allItems.length < depthNeeded;
 
-    const parsed = parsePlaces(pageItems, keywordsList[0], province, city, district, village);
+    const parseProvince = searchType === 'local' ? province : globalCountry;
+    const parseCity = searchType === 'local' ? city : globalCity;
+    const parseDistrict = searchType === 'local' ? district : '';
+    const parseVillage = searchType === 'local' ? village : '';
+
+    const parsed = parsePlaces(pageItems, keywordsList[0], parseProvince, parseCity, parseDistrict, parseVillage);
 
     // 8c. Simpan ke cache — HARUS di-await (serverless kill process setelah return)
     if (parsed.length > 0) {
@@ -453,8 +493,8 @@ async function handleFreeUserScrape(
 
     let task: any;
     try {
-      // Free user: satu call dengan depth = effectiveMaxRows (max 20)
-      task = await fetchDfsPage(searchQuery, effectiveMaxRows);
+      // Free user: satu call dengan depth = effectiveMaxRows (max 20) - always local
+      task = await fetchDfsPage(searchQuery, effectiveMaxRows, 2360, null, 'id');
     } catch (err: any) {
       if (err.message === 'TIMEOUT') { partialReturn = true; break; }
       if (isQuotaError(err.message || '')) quotaExhausted = true;

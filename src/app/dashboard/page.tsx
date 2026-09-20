@@ -12,6 +12,7 @@ import WaTemplateEditor, { ALL_VARIABLES } from '@/components/WaTemplateEditor';
 import SaveToListModal from '@/components/SaveToListModal';
 import toast from 'react-hot-toast';
 import { SCORE_BADGE_CONFIG, type ScoreLabel } from '@/lib/scoring';
+import SearchableSelect, { SearchableSelectOption } from '@/components/ui/SearchableSelect';
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' } | null;
 
@@ -32,6 +33,14 @@ export default function DashboardPage() {
   const [selectedCityId, setSelectedCityId] = useState('');
   const [selectedDistrictId, setSelectedDistrictId] = useState('');
   const [selectedVillageId, setSelectedVillageId] = useState('');
+  const [searchType, setSearchType] = useState<'local' | 'global'>('local');
+  const [globalCountry, setGlobalCountry] = useState('');
+  const [globalCity, setGlobalCity] = useState('');
+  const [countries, setCountries] = useState<any[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [globalCities, setGlobalCities] = useState<any[]>([]);
+  const [loadingGlobalCities, setLoadingGlobalCities] = useState(false);
+  const [selectedCountryIso, setSelectedCountryIso] = useState('');
   const [waTemplate, setWaTemplate] = useState('Halo {name}, perkenalkan kami dari ...');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
@@ -63,6 +72,7 @@ export default function DashboardPage() {
   const [upgradeFeature, setUpgradeFeature] = useState<'export' | 'whatsapp' | 'max_rows' | 'scrape_limit' | 'topup'>('scrape_limit');
 
   const isSuperAdmin = profile?.role === 'super_admin';
+  const isAdmin = isSuperAdmin || profile?.role === 'admin';
   const isActivated = profile?.is_activated === true;
   const isFreeUser = !isSuperAdmin && !isActivated;
 
@@ -112,6 +122,96 @@ export default function DashboardPage() {
     fetch(`https://www.emsifa.com/api-wilayah-indonesia/api/villages/${selectedDistrictId}.json`).then(r => r.json()).then(setVillages).catch(console.error);
   }, [selectedDistrictId]);
 
+  // Fetch countries
+  useEffect(() => {
+    if (searchType === 'global' && countries.length === 0) {
+      setLoadingCountries(true);
+      fetch('/next-api/locations/countries')
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) setCountries(data);
+          else console.error(data.error || 'Failed to fetch countries');
+        })
+        .catch(console.error)
+        .finally(() => setLoadingCountries(false));
+    }
+  }, [searchType, countries.length]);
+
+  // Fetch global cities
+  useEffect(() => {
+    if (!selectedCountryIso) {
+      setGlobalCities([]);
+      return;
+    }
+    setLoadingGlobalCities(true);
+    fetch(`/next-api/locations/regions?country=${selectedCountryIso}`)
+      .then(r => r.json())
+      .then(data => {
+          if (Array.isArray(data)) setGlobalCities(data);
+          else console.error(data.error || 'Failed to fetch global cities');
+      })
+      .catch(console.error)
+      .finally(() => setLoadingGlobalCities(false));
+  }, [selectedCountryIso]);
+
+  const countryOptions: SearchableSelectOption[] = countries.map(c => ({
+    value: c.country_iso_code,
+    label: c.location_name,
+    meta: { flagEmoji: c.flag_emoji, isRecommended: c.is_recommended }
+  }));
+
+  const globalCityOptions: SearchableSelectOption[] = globalCities.map(c => ({
+    value: String(c.location_code),
+    label: c.location_name
+  }));
+
+  const provinceOptions: SearchableSelectOption[] = provinces.map(p => ({ value: p.id, label: p.name }));
+  const cityOptions: SearchableSelectOption[] = cities.map(c => ({ value: c.id, label: c.name }));
+  const districtOptions: SearchableSelectOption[] = districts.map(d => ({ value: d.id, label: d.name }));
+  const villageOptions: SearchableSelectOption[] = villages.map(v => ({ value: v.id, label: v.name }));
+
+  const handleProvinceChange = (id: string) => {
+    setSelectedProvinceId(id);
+    const p = provinces.find(x => String(x.id) === String(id));
+    setProvinceName(p ? p.name : '');
+    setSelectedCityId(''); setCityName(''); setCities([]);
+    setSelectedDistrictId(''); setDistrictName(''); setDistricts([]);
+    setSelectedVillageId(''); setVillageName(''); setVillages([]);
+  };
+
+  const handleCityChange = (id: string) => {
+    setSelectedCityId(id);
+    const c = cities.find(x => String(x.id) === String(id));
+    setCityName(c ? c.name : '');
+    setSelectedDistrictId(''); setDistrictName(''); setDistricts([]);
+    setSelectedVillageId(''); setVillageName(''); setVillages([]);
+  };
+
+  const handleDistrictChange = (id: string) => {
+    setSelectedDistrictId(id);
+    const d = districts.find(x => String(x.id) === String(id));
+    setDistrictName(d ? d.name : '');
+    setSelectedVillageId(''); setVillageName(''); setVillages([]);
+  };
+
+  const handleVillageChange = (id: string) => {
+    setSelectedVillageId(id);
+    const v = villages.find(x => String(x.id) === String(id));
+    setVillageName(v ? v.name : '');
+  };
+
+  const handleCountryChange = (iso: string) => {
+    setSelectedCountryIso(iso);
+    const c = countries.find(x => x.country_iso_code === iso);
+    setGlobalCountry(c ? c.location_name : '');
+    setGlobalCity('');
+  };
+
+  const handleGlobalCityChange = (code: string) => {
+    const c = globalCities.find(x => String(x.location_code) === code);
+    setGlobalCity(c ? c.location_name : '');
+  };
+
   useEffect(() => { if (waTemplate) localStorage.setItem('scraperWaTemplate', waTemplate); }, [waTemplate]);
   useEffect(() => { setCurrentPage(1); setSelectedIndices(new Set()); }, [filterWebsite, filterPhone, sortConfig]);
 
@@ -122,7 +222,17 @@ export default function DashboardPage() {
       const res = await fetch('/next-api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, city: cityName, district: districtName, village: villageName, province: provinceName, maxRows }),
+        body: JSON.stringify({ 
+          keyword, 
+          city: cityName, 
+          district: districtName, 
+          village: villageName, 
+          province: provinceName, 
+          maxRows,
+          searchType,
+          globalCountry,
+          globalCity
+        }),
       });
       const data = await res.json();
       
@@ -288,44 +398,110 @@ export default function DashboardPage() {
 
         <div className="card-body p-6">
           <form onSubmit={handleScrape} className="flex flex-col gap-4">
+            <div className="tabs tabs-boxed bg-base-200/50 p-1 w-fit mb-2">
+              <a 
+                className={`tab ${searchType === 'local' ? 'tab-active font-bold bg-base-100 shadow-sm' : ''}`}
+                onClick={() => setSearchType('local')}
+              >
+                🇮🇩 Lokal (Indonesia)
+              </a>
+              <a 
+                className={`tab ${searchType === 'global' ? 'tab-active font-bold bg-base-100 shadow-sm text-primary' : ''} ${!isAdmin ? 'opacity-70' : ''}`}
+                onClick={() => {
+                  if (!isAdmin) {
+                    toast('Fitur ini masih dalam tahap pengembangan (Coming Soon) 🚀', { icon: '🚧' });
+                    return;
+                  }
+                  if (isFreeUser) {
+                    setUpgradeFeature('scrape_limit');
+                    setShowUpgradeModal(true);
+                  } else {
+                    setSearchType('global');
+                  }
+                }}
+              >
+                🌍 Global (Internasional) {!isAdmin ? <span className="badge badge-xs badge-neutral ml-1">Coming Soon</span> : (isFreeUser && <span className="ml-1 text-xs">💎</span>)}
+              </a>
+            </div>
+
             <div className="form-control w-full">
               <label className="label py-1">
                 <span className="label-text font-semibold">Keyword <span className="text-base-content/40 text-xs font-normal">(Pisahkan koma untuk multi-keyword)</span></span>
               </label>
               <input type="text" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="e.g. Barbershop, Cafe" className={inpStyle} required />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="form-control w-full">
-                <label className="label py-1"><span className="label-text font-semibold">Provinsi *</span></label>
-                <select value={selectedProvinceId} onChange={e => { setSelectedProvinceId(e.target.value); setProvinceName(e.target.options[e.target.selectedIndex].text); }} className={selStyle} required>
-                  <option value="">-- Pilih Provinsi --</option>
-                  {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+            {searchType === 'local' ? (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="form-control w-full">
+                    <label className="label py-1"><span className="label-text font-semibold">Provinsi *</span></label>
+                    <SearchableSelect
+                      options={provinceOptions}
+                      value={selectedProvinceId}
+                      onChange={handleProvinceChange}
+                      placeholder="-- Pilih Provinsi --"
+                    />
+                  </div>
+                  <div className="form-control w-full">
+                    <label className="label py-1"><span className="label-text font-semibold">Kota/Kabupaten *</span></label>
+                    <SearchableSelect
+                      options={cityOptions}
+                      value={selectedCityId}
+                      onChange={handleCityChange}
+                      placeholder="-- Pilih Kota/Kabupaten --"
+                      disabled={!selectedProvinceId}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="form-control w-full">
+                    <label className="label py-1"><span className="label-text font-semibold">Kecamatan <span className="text-base-content/40 text-xs font-normal">(Opsional)</span></span></label>
+                    <SearchableSelect
+                      options={districtOptions}
+                      value={selectedDistrictId}
+                      onChange={handleDistrictChange}
+                      placeholder="-- Pilih Kecamatan --"
+                      disabled={!selectedCityId}
+                    />
+                  </div>
+                  <div className="form-control w-full">
+                    <label className="label py-1"><span className="label-text font-semibold">Kelurahan <span className="text-base-content/40 text-xs font-normal">(Opsional)</span></span></label>
+                    <SearchableSelect
+                      options={villageOptions}
+                      value={selectedVillageId}
+                      onChange={handleVillageChange}
+                      placeholder="-- Pilih Kelurahan --"
+                      disabled={!selectedDistrictId}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="form-control w-full">
+                  <label className="label py-1"><span className="label-text font-semibold">Negara *</span></label>
+                  <SearchableSelect
+                    options={countryOptions}
+                    value={selectedCountryIso}
+                    onChange={handleCountryChange}
+                    placeholder="-- Pilih Negara --"
+                    isLoading={loadingCountries}
+                    groupRecommended={true}
+                  />
+                </div>
+                <div className="form-control w-full">
+                  <label className="label py-1"><span className="label-text font-semibold">Kota *</span></label>
+                  <SearchableSelect
+                    options={globalCityOptions}
+                    value={globalCityOptions.find(o => o.label === globalCity)?.value || ''}
+                    onChange={handleGlobalCityChange}
+                    placeholder="-- Pilih Kota --"
+                    disabled={!selectedCountryIso}
+                    isLoading={loadingGlobalCities}
+                  />
+                </div>
               </div>
-              <div className="form-control w-full">
-                <label className="label py-1"><span className="label-text font-semibold">Kota/Kabupaten *</span></label>
-                <select value={selectedCityId} onChange={e => { setSelectedCityId(e.target.value); setCityName(e.target.options[e.target.selectedIndex].text); }} className={selStyle} disabled={!selectedProvinceId} required>
-                  <option value="">-- Pilih Kota/Kabupaten --</option>
-                  {cities.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="form-control w-full">
-                <label className="label py-1"><span className="label-text font-semibold">Kecamatan <span className="text-base-content/40 text-xs font-normal">(Opsional)</span></span></label>
-                <select value={selectedDistrictId} onChange={e => { setSelectedDistrictId(e.target.value); setDistrictName(e.target.options[e.target.selectedIndex].text); }} className={selStyle} disabled={!selectedCityId}>
-                  <option value="">-- Pilih Kecamatan --</option>
-                  {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-              </div>
-              <div className="form-control w-full">
-                <label className="label py-1"><span className="label-text font-semibold">Kelurahan <span className="text-base-content/40 text-xs font-normal">(Opsional)</span></span></label>
-                <select value={selectedVillageId} onChange={e => { setSelectedVillageId(e.target.value); setVillageName(e.target.options[e.target.selectedIndex].text); }} className={selStyle} disabled={!selectedDistrictId}>
-                  <option value="">-- Pilih Kelurahan --</option>
-                  {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                </select>
-              </div>
-            </div>
+            )}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="form-control w-full">
                 <label className="label py-1"><span className="label-text font-semibold">Max Rows *</span></label>

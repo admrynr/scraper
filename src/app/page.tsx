@@ -77,24 +77,29 @@ export default async function Home() {
               <span className="block md:inline">
                 <RotatingText className="text-indigo-600 dark:text-indigo-400 font-extrabold" />
               </span>
-              {' '}Dapat Klien Baru —{' '}
+              {' '}Dapatkan Klien Baru —{' '}
               <span className="text-primary">Tanpa Iklan.</span>
             </h1>
 
-            <p className="text-lg md:text-xl text-base-content/75 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Cukup ketik jenis bisnis dan pilih wilayah, Prospekto langsung kumpulkan ratusan nama, nomor telepon, dan kontak WhatsApp calon klien — dalam hitungan detik.
+            <p className="text-lg md:text-xl font-semibold text-base-content/85 mb-8 max-w-3xl mx-auto leading-relaxed">
+              🔥 Akses jutaan database prospek lokal maupun internasional dan nikmati fitur CRM B2B premium hanya seharga kopi kekinian - termurah se-indonesia!
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-6">
               <Link href={registerHref} className="btn btn-primary btn-lg px-8 rounded-full shadow-lg shadow-primary/25 font-bold">
-                Daftar Akun, Gratis 5x Pencarian
+                Dapatkan 100 Prospek Gratis
               </Link>
               <Link href="#demo" className="btn btn-ghost hover:bg-base-200/80 btn-lg px-6 rounded-full border border-base-300 font-medium">
                 Tonton Demo ↓
               </Link>
             </div>
-            <p className="text-xs font-medium text-base-content/65">Gratis 5x scrape setelah daftar akun. Tanpa kartu kredit.</p>
+            <div className="flex items-center justify-center px-4">
+              <p className="text-xs sm:text-sm font-medium text-base-content/65 flex items-center gap-2 text-center">
+                <span className="text-primary">⚡</span>
+                <span>Daftar Sekarang, hingga mulai dapatkan 100 Prospek Gratis! - hanya dalam {"<"}5 menit. </span>
+              </p>
+            </div>
 
             {/* App screenshot mockup */}
             <div className="mt-14 relative mx-auto w-full max-w-4xl" id="demo">
@@ -186,55 +191,75 @@ export default async function Home() {
         </section>
 
         {/* ── 3. Guide (Empati → Otoritas → Fitur) ── */}
-        <section id="fitur" className="py-24 px-4 max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-base-content/60 text-sm font-semibold uppercase tracking-widest mb-4">Kami paham situasinya</p>
-            <h2 className="text-3xl md:text-4xl font-bold text-base-content leading-snug mb-5 max-w-3xl mx-auto">
-              Budget iklan terbatas, tapi target harus tetap tercapai.<br />
-              <span className="text-primary">Kami buatkan jalan pintas yang lebih masuk akal.</span>
-            </h2>
-            <p className="text-base-content/60 max-w-xl mx-auto">
-              Prospekto bukan sekadar tools scraping. Ini adalah mesin pencari prospek yang dirancang khusus untuk cara jualan di Indonesia — dari kelurahan ke kelurahan, langsung chat WA.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {[
-              {
-                icon: '⚡',
-                title: 'Cepat, akurat sampai level kelurahan',
-                body: 'Pilih wilayah dari provinsi sampai kelurahan. Data bisnis real-time langsung muncul — bukan cuma kota besar, tapi juga daerah-daerah yang biasanya luput dari radar.',
-                accent: 'orange',
-              },
-              {
-                icon: '💬',
-                title: 'Hubungi via WhatsApp, cukup satu klik',
-                body: 'Template pesan sudah terisi otomatis — nama bisnis, detail penawaran, semua siap. Klik "Chat WA", langsung masuk ke percakapan. Tidak perlu mengetik ulang.',
-                accent: 'indigo',
-              },
-              {
-                icon: '🎯',
-                title: 'Campaign terstruktur, bukan asal cari',
-                body: 'Atur beberapa kata kunci dan wilayah sekaligus dalam satu campaign. Hasilnya lebih relevan, lebih mudah dikelola, dan tidak tercecer.',
-                accent: 'indigo',
-              },
-              {
-                icon: '📁',
-                title: 'Data bisa disimpan atau diekspor kapan saja',
-                body: 'Simpan prospek pilihan ke dashboard, atau ekspor ke Excel / CSV untuk dipakai di CRM atau dibagi ke tim. Format siap pakai, tidak perlu diolah lagi.',
-                accent: 'orange',
-              },
-            ].map((f) => (
-              <div key={f.title} className={`card bg-base-100 border border-base-300 ${f.accent === 'orange' ? 'hover:border-primary/50' : 'hover:border-indigo-500/50'} hover:shadow-lg transition-all duration-200`}>
-                <div className="card-body gap-3">
-                  <div className={`w-11 h-11 ${f.accent === 'orange' ? 'bg-primary/10 text-primary' : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'} rounded-xl flex items-center justify-center text-2xl shrink-0`}>
-                    {f.icon}
-                  </div>
-                  <h3 className="font-bold text-base text-base-content">{f.title}</h3>
-                  <p className="text-base-content/70 text-sm leading-relaxed">{f.body}</p>
-                </div>
+        <section id="fitur" className="py-24 px-4 bg-gradient-to-b from-base-100 to-base-200 border-y border-base-300">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold mb-5 border border-primary/20">
+                Fitur Unggulan Prospekto
               </div>
-            ))}
+              <h2 className="text-3xl md:text-5xl font-extrabold text-base-content leading-tight mb-6 max-w-4xl mx-auto tracking-tight">
+                Dirancang khusus untuk tim B2B.<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-500">
+                  Kerja lebih cerdas, closing lebih cepat.
+                </span>
+              </h2>
+              <p className="text-base-content/70 max-w-2xl mx-auto text-lg leading-relaxed">
+                Prospekto bukan sekadar tools scraping biasa. Ini adalah mesin pencari prospek all-in-one yang dilengkapi workflow khusus untuk sales B2B di Indonesia, dan seluruh dunia.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  icon: '⚡',
+                  title: 'Akurasi Level Kelurahan',
+                  body: 'Pilih wilayah dari provinsi sampai kelurahan. Data bisnis real-time langsung muncul — jangkau daerah yang luput dari radar kompetitor.',
+                  accent: 'orange',
+                },
+                {
+                  icon: '💬',
+                  title: 'Chat WA 1-Klik',
+                  body: 'Template pesan otomatis terisi (nama bisnis, detail penawaran). Klik "Chat WA", langsung masuk ke percakapan tanpa mengetik ulang.',
+                  accent: 'indigo',
+                },
+                {
+                  icon: '🎯',
+                  title: 'Manajemen Campaign',
+                  body: 'Atur banyak kata kunci dan wilayah sekaligus dalam satu campaign terstruktur. Hasil lebih relevan, mudah dikelola, dan tidak tercecer.',
+                  accent: 'indigo',
+                },
+                {
+                  icon: '📁',
+                  title: 'Export Siap Pakai',
+                  body: 'Simpan prospek ke dashboard, atau ekspor Excel/CSV untuk CRM dan tim. Format data rapi, siap dieksekusi tanpa perlu repot diolah.',
+                  accent: 'orange',
+                },
+                {
+                  icon: '🌍',
+                  title: 'Scrape Global',
+                  badge: 'Coming Soon',
+                  body: 'Jangkau prospek bisnis di luar negeri (seluruh dunia). Sangat bermanfaat untuk eksportir, importir, dan freelancer dengan target klien internasional.',
+                  accent: 'indigo',
+                },
+              ].map((f) => (
+                <div key={f.title} className={`card bg-base-100 border border-base-300 shadow-sm ${f.accent === 'orange' ? 'hover:border-primary' : 'hover:border-indigo-500'} hover:shadow-xl transition-all duration-300 relative overflow-hidden group`}>
+                  <div className="card-body gap-4">
+                    <div className="flex justify-between items-start">
+                      <div className={`w-14 h-14 ${f.accent === 'orange' ? 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white' : 'bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white'} rounded-2xl flex items-center justify-center text-3xl shrink-0 transition-colors duration-300`}>
+                        {f.icon}
+                      </div>
+                      {f.badge && (
+                        <span className="badge badge-sm badge-neutral font-bold">{f.badge}</span>
+                      )}
+                    </div>
+                    <h3 className="font-extrabold text-xl text-base-content mt-2">{f.title}</h3>
+                    <p className="text-base-content/70 text-sm leading-relaxed">{f.body}</p>
+                  </div>
+                  {/* Decorative background glow on hover */}
+                  <div className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-300 ${f.accent === 'orange' ? 'bg-primary' : 'bg-indigo-500'}`}></div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
