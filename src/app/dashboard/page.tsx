@@ -10,6 +10,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import UpgradeModal from '@/components/UpgradeModal';
 import WaTemplateEditor, { ALL_VARIABLES } from '@/components/WaTemplateEditor';
 import SaveToListModal from '@/components/SaveToListModal';
+import ScoringInfoModal from '@/components/ScoringInfoModal';
 import toast from 'react-hot-toast';
 import { SCORE_BADGE_CONFIG, type ScoreLabel } from '@/lib/scoring';
 import SearchableSelect, { SearchableSelectOption } from '@/components/ui/SearchableSelect';
@@ -654,7 +655,21 @@ export default function DashboardPage() {
                     <input type="checkbox" checked={isAllPageSelected} ref={el => { if (el) el.indeterminate = isSomePageSelected && !isAllPageSelected; }} onChange={toggleSelectAll} className="checkbox checkbox-sm checkbox-primary" />
                   </th>
                   <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('name')}>Business Name{sortArrow('name')}</th>
-                  <th>Skor</th>
+                  <th className="flex items-center gap-1.5">
+                    Skor
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        (document.getElementById('scoring_info_modal') as HTMLDialogElement)?.showModal();
+                      }} 
+                      className="btn btn-xs btn-circle btn-ghost text-base-content/40 hover:text-primary hover:bg-primary/10"
+                      title="Aturan Scoring"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                      </svg>
+                    </button>
+                  </th>
                   <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('rating')}>Rating{sortArrow('rating')}</th>
                   <th className="cursor-pointer hover:bg-base-300/50 transition" onClick={() => requestSort('address')}>Alamat{sortArrow('address')}</th>
                   <th className="text-center">Aksi</th>
@@ -856,6 +871,9 @@ export default function DashboardPage() {
           </form>
         </dialog>
       )}
+
+      {/* Scoring Rules Modal */}
+      <ScoringInfoModal />
     </div>
   );
 }

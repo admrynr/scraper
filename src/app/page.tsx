@@ -81,8 +81,8 @@ export default async function Home() {
               <span className="text-primary">Tanpa Iklan.</span>
             </h1>
 
-            <p className="text-lg md:text-xl font-semibold text-base-content/85 mb-8 max-w-3xl mx-auto leading-relaxed">
-              🔥 Akses jutaan database prospek lokal maupun internasional dan nikmati fitur CRM B2B premium hanya seharga kopi kekinian - termurah se-indonesia!
+            <p className="text-lg md:text-xl font-medium text-base-content/85 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Kumpulkan <strong className="font-extrabold text-base-content">ribuan kontak prospek</strong> di sekitarmu maupun secara global. Langsung hubungi dengan <strong className="font-extrabold text-primary">sekali klik!</strong>
             </p>
 
             {/* CTAs */}
@@ -106,48 +106,15 @@ export default async function Home() {
               <div className="absolute inset-0 bg-gradient-to-b from-primary/15 via-indigo-500/10 to-transparent blur-3xl -z-10 rounded-full pointer-events-none" />
               <div className="mockup-browser border border-base-300 bg-base-100 shadow-2xl">
                 <div className="mockup-browser-toolbar">
-                  <div className="input border border-base-300 text-sm">prospekto.com/dashboard</div>
+                  <div className="input border border-base-300 text-sm">prospekto.id/demo</div>
                 </div>
-                <div className="bg-base-200/60 p-5 border-t border-base-300 text-left">
-                  {/* Fake search bar */}
-                  <div className="flex gap-3 mb-4">
-                    <div className="flex-1 bg-base-100 border border-base-300 rounded-lg px-4 py-2 text-sm text-base-content/60">
-                      Cari: &quot;Kontraktor&quot; — Kecamatan Tembalang, Semarang
-                    </div>
-                    <div className="btn btn-primary btn-sm px-5 font-semibold">Cari</div>
-                  </div>
-                  {/* Fake table */}
-                  <div className="bg-base-100 rounded-xl border border-base-300 overflow-hidden">
-                    <table className="table w-full text-sm">
-                      <thead className="bg-base-200/80 text-base-content/70 text-xs uppercase tracking-wide">
-                        <tr>
-                          <th>Nama Bisnis</th>
-                          <th>Rating</th>
-                          <th>Alamat</th>
-                          <th>Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          { name: 'CV Karya Mandiri', website: true, rating: '4.9', addr: 'Jl. Ngesrep No. 5' },
-                          { name: 'Bangun Jaya Konstruksi', website: false, rating: '4.7', addr: 'Jl. Durian Raya No. 22' },
-                          { name: 'Graha Cipta Bangunan', website: true, rating: '4.5', addr: 'Jl. Profesor Sudharto' },
-                        ].map((row) => (
-                          <tr key={row.name}>
-                            <td>
-                              <div className="font-semibold text-base-content">{row.name}</div>
-                              <div className={`text-xs font-medium ${row.website ? 'text-indigo-600 dark:text-indigo-400' : 'text-base-content/40'}`}>
-                                {row.website ? 'punya website' : 'belum ada website'}
-                              </div>
-                            </td>
-                            <td><span className="badge badge-warning badge-sm font-semibold">⭐ {row.rating}</span></td>
-                            <td className="text-base-content/70">{row.addr}</td>
-                            <td><span className="btn btn-xs btn-success text-white font-medium">Chat WA</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                <div className="bg-base-200/60 border-t border-base-300 flex justify-center overflow-hidden">
+                  <iframe
+                    src="/prospekto-video.html"
+                    className="w-full aspect-video border-0"
+                    title="Prospekto Demo Video"
+                    allowFullScreen
+                  />
                 </div>
               </div>
             </div>
@@ -155,34 +122,43 @@ export default async function Home() {
         </section>
 
         {/* ── 2. Stakes (Apa yang Hilang Kalau Tidak Bertindak) ── */}
-        <section className="py-20 bg-base-200 border-y border-base-300">
-          <div className="max-w-5xl mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-4 max-w-3xl mx-auto leading-snug">
-              Setiap hari yang berlalu,<br />kompetitor Anda sudah satu langkah lebih dekat ke klien.
+        <section className="py-24 bg-base-200 border-y border-base-300 relative overflow-hidden">
+          {/* Subtle warning glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-64 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
+          
+          <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
+            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wider">
+              Waktu Terus Berjalan
+            </div>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-base-content mb-6 max-w-4xl mx-auto leading-tight tracking-tight">
+              Setiap hari yang berlalu,<br className="hidden md:block" /> <strong className="text-primary font-extrabold">kompetitor Anda</strong> sudah satu langkah <strong className="font-extrabold">lebih dekat ke klien.</strong>
             </h2>
-            <p className="text-base-content/60 text-base mb-12">Ini bukan soal siapa yang paling keras bekerja. Ini soal siapa yang gerak lebih cepat.</p>
+            <p className="text-base-content/70 text-lg mb-14 max-w-2xl mx-auto font-medium">Ini bukan sekadar soal siapa yang paling keras bekerja.<br className="hidden md:block"/>Ini tentang <strong className="text-base-content">siapa yang bergerak lebih cepat</strong> dan efisien.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 {
                   icon: '🏃‍♂️',
                   title: 'Leads jatuh ke tangan kompetitor',
-                  body: 'Ratusan calon klien di area Anda sudah aktif dicari oleh pesaing yang lebih dulu bergerak. Setiap jam adalah kesempatan yang terlewat.',
+                  body: 'Ratusan calon klien di area Anda sudah aktif dicari oleh pesaing yang lebih dulu bergerak. Setiap jam adalah kesempatan berharga yang terlewat.',
                 },
                 {
                   icon: '⏳',
-                  title: 'Waktu habis di pekerjaan yang repetitif',
-                  body: 'Scrolling Google Maps berjam-jam, copy-paste nomor satu per satu — sementara target closing bulanan terus menghitung mundur.',
+                  title: 'Waktu habis di pekerjaan repetitif',
+                  body: 'Scrolling Google Maps berjam-jam, copy-paste nomor satu per satu — sementara target closing bulanan Anda terus menghitung mundur.',
                 },
                 {
                   icon: '📉',
                   title: 'Pipeline stagnan, target meleset',
-                  body: 'Kalau prospek yang dihubungi itu-itu saja, hasilnya pun akan sama. Bisnis butuh aliran calon klien baru yang segar dan relevan.',
+                  body: 'Kalau prospek yang dihubungi itu-itu saja, hasilnya pun akan sama. Bisnis Anda butuh aliran calon klien baru yang segar dan relevan.',
                 },
               ].map((card) => (
-                <div key={card.title} className="bg-base-100 p-7 rounded-2xl border border-base-300 shadow-sm text-left">
-                  <div className="text-3xl mb-4">{card.icon}</div>
-                  <h3 className="font-bold text-lg mb-2">{card.title}</h3>
+                <div key={card.title} className="bg-base-100 p-8 rounded-2xl border border-primary/10 hover:border-primary/30 shadow-sm hover:shadow-lg transition-all duration-300 text-left relative group overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-primary/30 group-hover:bg-primary transition-colors" />
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-2xl mb-5">
+                    {card.icon}
+                  </div>
+                  <h3 className="font-extrabold text-xl text-base-content mb-3">{card.title}</h3>
                   <p className="text-base-content/70 text-sm leading-relaxed">{card.body}</p>
                 </div>
               ))}
@@ -241,6 +217,13 @@ export default async function Home() {
                   body: 'Jangkau prospek bisnis di luar negeri (seluruh dunia). Sangat bermanfaat untuk eksportir, importir, dan freelancer dengan target klien internasional.',
                   accent: 'indigo',
                 },
+                {
+                  icon: '✨',
+                  title: 'Smart Lead Scoring',
+                  badge: 'Baru',
+                  body: 'Otomatis menilai dan mengkategorikan prospek berdasarkan kelengkapan data. Fokuskan waktu Anda pada target dengan potensi closing tertinggi.',
+                  accent: 'orange',
+                },
               ].map((f) => (
                 <div key={f.title} className={`card bg-base-100 border border-base-300 shadow-sm ${f.accent === 'orange' ? 'hover:border-primary' : 'hover:border-indigo-500'} hover:shadow-xl transition-all duration-300 relative overflow-hidden group`}>
                   <div className="card-body gap-4">
@@ -268,7 +251,7 @@ export default async function Home() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-primary text-xs font-bold uppercase tracking-widest mb-3">Sesederhana ini</p>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-base-content">Dari nol sampai dapat klien baru — hanya 3 langkah.</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-base-content">Dari daftar sampai dapat klien baru — hanya 3 langkah.</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
@@ -287,7 +270,7 @@ export default async function Home() {
                 },
                 {
                   n: '03',
-                  title: 'Hubungi hari ini juga',
+                  title: 'Hubungi saat itu juga',
                   body: 'Filter nomor yang valid, ekspor ke Excel kalau perlu, atau langsung kirim penawaran via tombol "Chat WA". Semua dari satu halaman.',
                 },
               ].map((step) => (
@@ -303,31 +286,36 @@ export default async function Home() {
 
             <div className="mt-16 text-center">
               <Link href={registerHref} className="btn btn-primary btn-lg rounded-full px-10 shadow-lg shadow-primary/25 font-bold">
-                Mulai Langkah Pertama — Gratis
+                Mulai Sekarang
               </Link>
             </div>
           </div>
         </section>
 
         {/* ── 5. Success Vision ── */}
-        <section className="py-24 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-6">
-              Lebih banyak klien potensial,<br className="hidden md:block" /> dengan usaha yang jauh lebih ringan
+        <section className="py-24 px-4 relative overflow-hidden bg-base-100">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-full bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+          
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wider">
+              Bayangkan Hasilnya
+            </div>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-base-content mb-6 tracking-tight leading-tight">
+              <strong className="text-indigo-600 dark:text-indigo-400 font-extrabold">Lebih banyak klien potensial,</strong><br className="hidden md:block" /> dengan usaha yang <strong className="font-extrabold">jauh lebih ringan.</strong>
             </h2>
-            <p className="text-base-content/70 text-lg leading-relaxed mb-12 max-w-2xl mx-auto">
-              Itulah yang dirasakan pengguna Prospekto setiap harinya. Mereka tidak lagi menghabiskan waktu berjam-jam mencari kontak secara manual — cukup tentukan target, dan daftar calon klien yang relevan langsung tersedia. Lebih banyak waktu untuk follow-up, lebih banyak peluang closing.
+            <p className="text-base-content/75 text-lg leading-relaxed mb-12 max-w-2xl mx-auto font-medium">
+              Itulah yang dirasakan pengguna Prospekto setiap harinya. Mereka tidak lagi menghabiskan waktu berjam-jam mencari kontak secara manual — cukup tentukan target, dan daftar calon klien langsung tersedia. <strong className="text-base-content">Lebih banyak waktu untuk follow-up, lebih banyak peluang closing.</strong>
             </p>
 
-            <div className="flex flex-wrap justify-center gap-6">
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
               {[
                 { icon: '📈', label: 'Lebih banyak prospek dalam waktu singkat' },
                 { icon: '🎯', label: 'Kontak yang tepat sasaran & relevan' },
                 { icon: '✅', label: 'Lebih banyak waktu untuk closing' },
               ].map((item) => (
-                <div key={item.label} className="flex items-center gap-3 bg-base-200 border border-base-300 px-5 py-3 rounded-full">
-                  <span className="text-xl">{item.icon}</span>
-                  <span className="font-semibold text-base-content text-sm">{item.label}</span>
+                <div key={item.label} className="flex items-center gap-3 bg-base-100 shadow-md border border-indigo-500/15 hover:border-indigo-500/40 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 px-6 py-3.5 rounded-full">
+                  <span className="text-xl text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 w-8 h-8 rounded-full flex items-center justify-center">{item.icon}</span>
+                  <span className="font-bold text-base-content text-sm">{item.label}</span>
                 </div>
               ))}
             </div>
@@ -344,7 +332,12 @@ export default async function Home() {
               <h2 className="text-3xl md:text-4xl font-extrabold text-base-content mb-3">
                 Bayar Sekali. Dapat Ribuan Prospek.
               </h2>
-              <p className="text-base-content/70">Tidak ada langganan bulanan. Tidak ada kejutan tagihan. Credits tidak expired.</p>
+              <p className="text-base-content/80 text-lg mb-2">
+                🔥 Akses <strong className="font-extrabold text-base-content">ribuan prospek lokal dan internasional</strong> beserta <strong className="font-extrabold text-base-content">fitur premium CRM B2B</strong> hanya <strong className="font-extrabold text-primary">seharga kopi kekinian</strong>, termurah se-Indonesia!
+              </p>
+              <p className="text-base-content/70">
+                <strong className="font-semibold text-base-content">Tidak ada langganan bulanan.</strong> Tidak ada kejutan tagihan. Credits <strong className="font-semibold text-base-content">tidak expired.</strong>
+              </p>
             </div>
 
             {/* Tier 1: Free vs Aktivasi */}

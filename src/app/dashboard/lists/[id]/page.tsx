@@ -10,6 +10,7 @@ import { confirmToast } from '@/lib/confirmToast';
 import * as XLSX from 'xlsx';
 import { ALL_VARIABLES } from '@/components/WaTemplateEditor';
 import { SCORE_BADGE_CONFIG, type ScoreLabel } from '@/lib/scoring';
+import ScoringInfoModal from '@/components/ScoringInfoModal';
 
 export default function CampaignDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -259,7 +260,21 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
                       />
                     </th>
                     <th>Nama Bisnis</th>
-                    <th>Skor</th>
+                    <th className="flex items-center gap-1.5 whitespace-nowrap">
+                      Skor
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          (document.getElementById('scoring_info_modal') as HTMLDialogElement)?.showModal();
+                        }} 
+                        className="btn btn-xs btn-circle btn-ghost text-base-content/40 hover:text-primary hover:bg-primary/10"
+                        title="Aturan Scoring"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                      </button>
+                    </th>
                     <th>Kontak & Alamat</th>
                     <th>Status CRM</th>
                     <th>Pipeline</th>
@@ -303,13 +318,13 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
                         {/* CRM Status (lama) */}
                         <td>
                           <select 
-                            className={`select select-xs w-full max-w-[140px] font-bold ${
-                              p.status === 'belum_dihubungi' ? 'select-bordered' :
-                              p.status === 'sudah_dihubungi' ? 'select-info text-info' :
-                              p.status === 'tertarik' ? 'select-success text-success' :
+                            className={`select select-xs w-full max-w-[140px] font-bold border-0 ${
+                              p.status === 'belum_dihubungi' ? 'bg-base-200 text-base-content/60' :
+                              p.status === 'sudah_dihubungi' ? 'bg-info/20 text-info' :
+                              p.status === 'tertarik' ? 'bg-success/20 text-success' :
                               p.status === 'deal' ? 'bg-success text-white' :
-                              p.status === 'tidak_tertarik' ? 'select-error text-error' :
-                              p.status === 'follow_up' ? 'select-warning text-warning' : 'select-bordered'
+                              p.status === 'tidak_tertarik' ? 'bg-error/20 text-error' :
+                              p.status === 'follow_up' ? 'bg-warning/20 text-warning' : 'bg-base-200 text-base-content/60'
                             }`}
                             value={p.status}
                             onChange={(e) => updateStatus(p.id, e.target.value)}
@@ -325,13 +340,13 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
                         {/* Pipeline Status (baru) */}
                         <td>
                           <select
-                            className={`select select-xs w-full max-w-[140px] font-bold ${
-                              p.pipeline_status === 'belum_dihubungi' ? 'select-bordered' :
-                              p.pipeline_status === 'dihubungi' ? 'select-info text-info' :
-                              p.pipeline_status === 'dibalas' ? 'select-warning text-warning' :
-                              p.pipeline_status === 'tertarik' ? 'select-success text-success' :
+                            className={`select select-xs w-full max-w-[140px] font-bold border-0 ${
+                              p.pipeline_status === 'belum_dihubungi' ? 'bg-base-200 text-base-content/60' :
+                              p.pipeline_status === 'dihubungi' ? 'bg-info/20 text-info' :
+                              p.pipeline_status === 'dibalas' ? 'bg-warning/20 text-warning' :
+                              p.pipeline_status === 'tertarik' ? 'bg-success/20 text-success' :
                               p.pipeline_status === 'closed' ? 'bg-success text-white' :
-                              p.pipeline_status === 'tidak_tertarik' ? 'select-error text-error' : 'select-bordered'
+                              p.pipeline_status === 'tidak_tertarik' ? 'bg-error/20 text-error' : 'bg-base-200 text-base-content/60'
                             }`}
                             value={p.pipeline_status || 'belum_dihubungi'}
                             onChange={(e) => updatePipelineStatus(p.id, e.target.value)}
@@ -464,6 +479,8 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
         </dialog>
       )}
 
+      {/* Scoring Rules Modal */}
+      <ScoringInfoModal />
     </div>
   );
 }
