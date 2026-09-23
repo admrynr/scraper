@@ -165,24 +165,18 @@ export async function POST(request: NextRequest) {
         ...(profile.phone ? { phone: profile.phone } : {}),
       },
       enabled_payments: [
-        'gopay',
-        'bank_transfer',
-        'bca_klikbca',
-        'bca_klikpay',
-        'cimb_clicks',
-        'danamon_online',
-        'mandiri_clickpay',
-        'bri_epay',
-        'echannel',
-        'permata_va',
+        // Transfer Bank / Virtual Account
+        'bank_transfer',   // umbrella: mencakup bca_va, bni_va, bri_va, other_va
         'bca_va',
         'bni_va',
         'bri_va',
         'other_va',
-        'indomaret',
-        'alfamart',
-        'akulaku',
-        'shopeepay',
+        'echannel',        // Mandiri Bill Payment
+        // GoPay — otomatis include GoPay Dynamic QRIS (per Midtrans Snap docs)
+        // mobile → redirect GoPay app; desktop → tampil QR code dinamis
+        'gopay',
+        // Dana & GoPay Static QRIS — masih proses aktivasi di Midtrans Dashboard
+        // 'dana', 'qris_static' — aktifkan setelah approved
       ],
       gopay: {
         enable_callback: true,

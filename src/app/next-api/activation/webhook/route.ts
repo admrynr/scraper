@@ -1,97 +1,131 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+﻿import { NextRequest, NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 // @ts-ignore
-import Midtrans from 'midtrans-client';
-import crypto from 'crypto';
+import Midtrans from "midtrans-client";
 
-// POST /next-api/activation/webhook — dipanggil Midtrans saat pembayaran berhasil
+// Midtrans Payment Notification Webhook
+// Terdaftar di: Midtrans Dashboard → Settings → Configuration → Payment Notification URL
+// URL: https://prospekto.id/next-api/activation/webhook
+
+const PAID_STATUSES = ["capture", "settlement"];
+const FAILED_STATUSES = ["deny", "cancel", "expire", "failure"];
+
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
 
-  // Verifikasi signature dari Midtrans
-  // Format: SHA512(order_id + status_code + gross_amount + server_key)
-  const { order_id, status_code, gross_amount, signature_key, transaction_status, fraud_status } = body;
+  const { order_id, transaction_status, payment_type } = body;
 
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || '';
-  const expectedSig = crypto
-    .createHash('sha512')
-    .update(`${order_id}${status_code}${gross_amount}${serverKey}`)
-    .digest('hex');
+  if (!order_id || !transaction_status) {
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  }
 
-  if (signature_key !== expectedSig) {
-    console.error('Midtrans webhook: Invalid signature');
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  // Verifikasi ulang ke Midtrans — JANGAN percaya body mentah-mentah (anti-spoofing)
+  const core = new Midtrans.CoreApi({
+    isProduction: process.env.MIDTRANS_IS_PRODUCTION === "true",
+    serverKey: process.env.MIDTRANS_SERVER_KEY,
+  });
+
+  let verified: any;
+  try {
+    verified = await core.transaction.status(order_id);
+  } catch (err: any) {
+    console.error("[webhook] Midtrans verification failed:", err?.message);
+    return NextResponse.json({ error: "Verification failed" }, { status: 500 });
+  }
+
+  const verifiedStatus = verified.transaction_status;
+  const verifiedFraud = verified.fraud_status;
+
+  const isPaid =
+    PAID_STATUSES.includes(verifiedStatus) &&
+    (verifiedFraud === "accept" || verifiedFraud === undefined);
+  const isFailed = FAILED_STATUSES.includes(verifiedStatus);
+
+  if (!isPaid && !isFailed) {
+    console.log(`[webhook] order=${order_id} status=${verifiedStatus} — no action needed`);
+    return NextResponse.json({ ok: true });
   }
 
   const adminClient = createAdminClient();
 
   // Cari activation request berdasarkan order_id
-  const { data: activationReq } = await adminClient
-    .from('activation_requests')
-    .select('*')
-    .eq('midtrans_order_id', order_id)
+  const { data: req, error: findErr } = await adminClient
+    .from("activation_requests")
+    .select("*")
+    .eq("midtrans_order_id", order_id)
     .single();
 
-  if (!activationReq) {
-    console.error(`Webhook: activation request not found for order ${order_id}`);
-    return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+  if (findErr || !req) {
+    console.error("[webhook] Order not found in DB:", order_id);
+    // Return 200 agar Midtrans tidak retry terus (kita tidak kenal order ini)
+    return NextResponse.json({ ok: true });
   }
 
-  // Cek apakah sudah diproses sebelumnya
-  if (activationReq.status === 'paid') {
-    return NextResponse.json({ message: 'Already processed' });
+  // Idempotent — jika sudah diproses sebelumnya, skip
+  if (req.status === "paid" || req.status === "failed") {
+    console.log(`[webhook] order=${order_id} already ${req.status} — skip`);
+    return NextResponse.json({ ok: true });
   }
 
-  // Tentukan apakah pembayaran berhasil
-  const isSuccess =
-    (transaction_status === 'capture' && fraud_status === 'accept') ||
-    transaction_status === 'settlement';
-
-  const isFailed =
-    transaction_status === 'cancel' ||
-    transaction_status === 'deny' ||
-    transaction_status === 'expire' ||
-    transaction_status === 'failure';
-
-  if (isSuccess) {
-    // Update status activation request
+  if (isFailed) {
     await adminClient
-      .from('activation_requests')
+      .from("activation_requests")
       .update({
-        status: 'paid',
-        midtrans_transaction_id: body.transaction_id,
-        midtrans_payment_type: body.payment_type,
+        status: "failed",
+        midtrans_payment_type: verified.payment_type || payment_type || null,
       })
-      .eq('id', activationReq.id);
-
-    // Update profil user
-    const { data: currentProfile } = await adminClient
-      .from('profiles')
-      .select('purchased_credits, is_activated')
-      .eq('id', activationReq.user_id)
-      .single();
-
-    const currentCredits = currentProfile?.purchased_credits ?? 0;
-    const updates: any = {
-      purchased_credits: currentCredits + activationReq.credits,
-    };
-
-    if (activationReq.type === 'activation') {
-      updates.is_activated = true;
-    }
-
-    await adminClient
-      .from('profiles')
-      .update(updates)
-      .eq('id', activationReq.user_id);
-
-    console.log(`✅ Payment success: user ${activationReq.user_id}, type ${activationReq.type}, +${activationReq.credits} credits`);
-  } else if (isFailed) {
-    await adminClient
-      .from('activation_requests')
-      .update({ status: transaction_status === 'expire' ? 'expired' : 'failed' })
-      .eq('id', activationReq.id);
+      .eq("id", req.id);
+    console.log(`[webhook] order=${order_id} → FAILED`);
+    return NextResponse.json({ ok: true });
   }
 
-  return NextResponse.json({ message: 'OK' });
+  // === PAID: update DB ===
+  await adminClient
+    .from("activation_requests")
+    .update({
+      status: "paid",
+      midtrans_transaction_id: verified.transaction_id || null,
+      midtrans_payment_type: verified.payment_type || payment_type || null,
+    })
+    .eq("id", req.id);
+
+  // Ambil data profile user
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("id, is_activated, purchased_credits")
+    .eq("id", req.user_id)
+    .single();
+
+  if (!profile) {
+    console.error("[webhook] Profile not found for user_id:", req.user_id);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (req.type === "activation") {
+    // Aktifkan akun + tambah credits
+    await adminClient
+      .from("profiles")
+      .update({
+        is_activated: true,
+        purchased_credits: (profile.purchased_credits ?? 0) + req.credits,
+      })
+      .eq("id", req.user_id);
+    console.log(`[webhook] order=${order_id} → ACTIVATED user=${req.user_id} +${req.credits} credits`);
+  } else {
+    // Top-up: tambah credits saja
+    await adminClient
+      .from("profiles")
+      .update({
+        purchased_credits: (profile.purchased_credits ?? 0) + req.credits,
+      })
+      .eq("id", req.user_id);
+    console.log(`[webhook] order=${order_id} → TOPUP user=${req.user_id} +${req.credits} credits`);
+  }
+
+  return NextResponse.json({ ok: true });
 }

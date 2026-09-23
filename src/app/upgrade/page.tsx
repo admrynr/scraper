@@ -333,9 +333,28 @@ export default function UpgradePage() {
           <p className="text-base-content/60 text-sm mb-3">
             Diproses via <strong>Midtrans</strong> — payment gateway #1 Indonesia. Aman, terenkripsi, instan.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {['GoPay', 'OVO', 'Dana', 'ShopeePay', 'BCA', 'Mandiri', 'BNI', 'BRI', 'BSI', 'Alfamart', 'Indomaret', 'QRIS', 'Kartu Kredit/Debit'].map(m => (
-              <span key={m} className="badge badge-ghost badge-sm font-medium">{m}</span>
+          {/* Metode aktif */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {[
+              { label: 'Transfer Bank / Virtual Account', icon: '🏦' },
+              { label: 'GoPay', icon: '💚' },
+              { label: 'QRIS Dynamic (GoPay)', icon: '📱' },
+            ].map(m => (
+              <span key={m.label} className="badge badge-ghost badge-sm font-medium gap-1">
+                {m.icon} {m.label}
+              </span>
+            ))}
+          </div>
+          {/* Metode segera hadir */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs text-base-content/40 font-semibold uppercase tracking-wide">Segera hadir:</span>
+            {[
+              { label: 'Dana', icon: '💙' },
+              { label: 'QRIS Static (GoPay)', icon: '🔳' },
+            ].map(m => (
+              <span key={m.label} className="badge badge-outline badge-sm font-medium gap-1 opacity-50">
+                {m.icon} {m.label} · Proses Aktivasi
+              </span>
             ))}
           </div>
         </div>

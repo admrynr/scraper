@@ -386,6 +386,10 @@ export default function DashboardPage() {
               📋 Campaigns
             </Link>
 
+            <Link href="/dashboard/transactions" className="btn btn-sm btn-ghost border border-base-300">
+              🧾 Riwayat
+            </Link>
+
             {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
               <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost border border-base-300">⚙️ Admin</button>
             )}
