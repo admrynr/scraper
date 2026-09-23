@@ -177,21 +177,21 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="min-h-screen bg-base-200 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm mb-6 border border-base-300 gap-4">
-          <div className="flex items-center gap-4">
-            <Logo href="/dashboard" size="sm" />
-            <div className="h-6 w-px bg-base-300"></div>
-            <h1 className="text-xl font-bold truncate max-w-[200px] md:max-w-md">{listData?.name}</h1>
+    <div className="w-full max-w-7xl mx-auto py-6 md:py-8 px-4 sm:px-6">
+      {/* Page Title & Breadcrumb */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-base-content/60 mb-1">
+            <Link href="/dashboard/lists" className="hover:text-primary transition">Campaigns</Link>
+            <span>/</span>
+            <span className="text-base-content font-medium truncate max-w-[200px]">{listData?.name}</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard/lists" className="btn btn-sm btn-ghost">← Kembali</Link>
-            <ThemeToggle />
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold truncate max-w-xl">{listData?.name}</h1>
         </div>
+        <Link href="/dashboard/lists" className="btn btn-sm btn-ghost border border-base-300">
+          ← Kembali ke Semua Campaign
+        </Link>
+      </div>
 
         {/* Content */}
         <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 overflow-hidden">
@@ -374,8 +374,6 @@ export default function CampaignDetailsPage({ params }: { params: Promise<{ id: 
             )}
           </div>
         </div>
-
-      </div>
 
       {/* Filter Modal */}
       {showFilterModal && (

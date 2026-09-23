@@ -105,21 +105,25 @@ export default function ListsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-base-200 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm mb-6 border border-base-300 gap-4">
-          <div className="flex items-center gap-4">
-            <Logo href="/dashboard" size="sm" />
-            <div className="h-6 w-px bg-base-300"></div>
-            <h1 className="text-xl font-bold">Campaigns / Lists</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="btn btn-sm btn-ghost">← Kembali ke Scraper</Link>
-            <ThemeToggle />
-          </div>
+    <div className="w-full max-w-6xl mx-auto py-6 md:py-8 px-4 sm:px-6">
+      {/* Page Title & Action */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <span>📋</span> Campaigns / Lists
+          </h1>
+          <p className="text-xs text-base-content/60 mt-1">
+            Kelola daftar prospek bisnis tersimpan untuk outreach dan follow-up
+          </p>
         </div>
+        <button
+          onClick={() => setShowModal(true)}
+          disabled={lists.length >= 10}
+          className="btn btn-sm btn-primary font-bold shadow-sm"
+        >
+          + Buat Campaign Baru
+        </button>
+      </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -183,8 +187,6 @@ export default function ListsPage() {
             </div>
           )}
         </div>
-
-      </div>
 
       {/* Modal Buat List */}
       {showModal && (

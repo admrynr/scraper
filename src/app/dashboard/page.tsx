@@ -266,6 +266,9 @@ export default function DashboardPage() {
           return { ...prev, daily_credits: dc, purchased_credits: pc, last_reset_date: today };
         });
       }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('profileUpdated'));
+      }
       toast.success('Scraping selesai!');
     } catch (err: any) { 
       setError(err.message); 
@@ -356,49 +359,25 @@ export default function DashboardPage() {
   const inpStyle = 'input input-bordered w-full bg-base-100 text-base-content';
 
   return (
-    <div className="min-h-screen bg-base-200 flex flex-col items-center py-10 px-4" onClick={() => setShowExportMenu(null)}>
-      <div className="w-full max-w-4xl card bg-base-100 shadow-sm border border-base-200 overflow-visible mb-6">
-        <div className="bg-base-100 border-b border-base-300 px-6 py-4 flex flex-col md:flex-row justify-between items-center rounded-t-box gap-4">
-          <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start">
-            <Logo href="/dashboard" size="lg" />
-            <span className="badge badge-primary text-xs font-bold uppercase tracking-wider">CRM</span>
+    <div className="w-full max-w-5xl mx-auto py-6 md:py-8 px-4 sm:px-6 flex flex-col items-center" onClick={() => setShowExportMenu(null)}>
+      <div className="w-full card bg-base-100 shadow-sm border border-base-200 overflow-visible mb-6">
+        <div className="bg-base-100 border-b border-base-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center rounded-t-box gap-3">
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold text-base-content flex items-center gap-2">
+              <span>🔍</span> Ekstraksi Data Prospek Google Maps
+            </h1>
+            <p className="text-xs text-base-content/60 mt-0.5">
+              Cari dan kumpulkan data prospek bisnis terverifikasi untuk outreach Anda
+            </p>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 w-full md:w-auto">
-            {profile && (
-              <div className="flex items-center gap-2">
-                <div className={`badge ${isActivated || isSuperAdmin ? 'badge-success' : 'badge-warning'} font-bold`}>
-                  {isActivated || isSuperAdmin ? 'AKTIF' : 'FREE'}
-                </div>
-                <div className="bg-base-200 px-3 py-1.5 rounded-lg text-xs font-medium flex flex-col items-center sm:items-end text-base-content border border-base-300">
-                  {isFreeUser ? (
-                    <span>Scrape: <strong className="text-sm font-bold">{Math.max(0, 5 - (profile.scrape_count_today || 0))}</strong>/5</span>
-                  ) : (
-                    <span>Credits: <strong className="text-sm font-bold text-primary">{totalCredits}</strong></span>
-                  )}
-                </div>
-                {isFreeUser && (
-                  <button onClick={() => { setUpgradeFeature('scrape_limit'); setShowUpgradeModal(true); }} className="btn btn-xs btn-primary font-bold">Upgrade</button>
-                )}
-              </div>
-            )}
-            
-            <Link href="/dashboard/lists" className="btn btn-sm btn-ghost border border-base-300">
-              📋 Campaigns
-            </Link>
-
-            <Link href="/dashboard/transactions" className="btn btn-sm btn-ghost border border-base-300">
-              🧾 Riwayat
-            </Link>
-
-            {profile?.role && ['super_admin', 'admin'].includes(profile.role) && (
-              <button onClick={() => router.push('/admin')} className="btn btn-sm btn-ghost border border-base-300">⚙️ Admin</button>
-            )}
-            <ThemeToggle />
-            <div className="text-center sm:text-right w-full sm:w-auto mt-2 sm:mt-0">
-              <p className="text-base-content/80 text-xs font-semibold">{profile?.full_name || profile?.email}</p>
-              <button onClick={logout} className="text-base-content/50 text-xs hover:text-error transition underline">Logout</button>
-            </div>
-          </div>
+          {isFreeUser && (
+            <button 
+              onClick={() => { setUpgradeFeature('scrape_limit'); setShowUpgradeModal(true); }}
+              className="btn btn-xs sm:btn-sm btn-primary font-bold shadow-sm hover:scale-105 transition-transform"
+            >
+              ⭐ Upgrade Pro
+            </button>
+          )}
         </div>
 
         <div className="card-body p-6">

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -132,21 +132,21 @@ export default function TransactionsPage() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   return (
-    <div className="min-h-screen bg-base-200 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center bg-base-100 p-4 rounded-xl shadow-sm mb-6 border border-base-300 gap-4">
-          <div className="flex items-center gap-4">
-            <Logo href="/dashboard" size="sm" />
-            <div className="h-6 w-px bg-base-300" />
-            <h1 className="text-xl font-bold">🧾 Riwayat Transaksi</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="btn btn-sm btn-ghost">← Kembali ke Scraper</Link>
-            <ThemeToggle />
-          </div>
+    <div className="w-full max-w-5xl mx-auto py-6 md:py-8 px-4 sm:px-6">
+      {/* Page Title & Action */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <span>🧾</span> Riwayat Transaksi
+          </h1>
+          <p className="text-xs text-base-content/60 mt-1">
+            Status pembelian kuota kredit, aktivasi akun, dan riwayat pembayaran Midtrans
+          </p>
         </div>
+        <Link href="/upgrade" className="btn btn-sm btn-primary font-bold shadow-sm">
+          + Top Up / Aktivasi
+        </Link>
+      </div>
 
         {/* Info Banner */}
         <div className="alert alert-info mb-6 rounded-xl text-sm">
@@ -331,7 +331,6 @@ export default function TransactionsPage() {
         <p className="text-center text-xs text-base-content/40 mt-6">
           Butuh bantuan? Hubungi CS kami dan sertakan <strong>Order ID</strong> transaksi Anda.
         </p>
-      </div>
     </div>
   );
 }
