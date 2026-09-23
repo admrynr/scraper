@@ -90,7 +90,7 @@ export default function DashboardNavbar() {
       <header className="sticky top-0 z-40 w-full bg-base-100/90 backdrop-blur-md border-b border-base-300 shadow-sm transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-4">
-            
+
             {/* Left: Logo & CRM Badge */}
             <div className="flex items-center gap-3">
               <Logo href="/dashboard" size="md" />
@@ -103,11 +103,10 @@ export default function DashboardNavbar() {
             <nav className="hidden md:flex items-center gap-1.5 p-1 bg-base-200/80 rounded-xl border border-base-300/50">
               <Link
                 href="/dashboard"
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  isScraperActive
-                    ? 'bg-base-100 text-primary font-bold shadow-sm'
-                    : 'text-base-content/70 hover:text-base-content hover:bg-base-100/50'
-                }`}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${isScraperActive
+                  ? 'bg-base-100 text-primary font-bold shadow-sm'
+                  : 'text-base-content/70 hover:text-base-content hover:bg-base-100/50'
+                  }`}
               >
                 <span>🔍</span>
                 <span>Scraper</span>
@@ -115,11 +114,10 @@ export default function DashboardNavbar() {
 
               <Link
                 href="/dashboard/lists"
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  isCampaignsActive
-                    ? 'bg-base-100 text-primary font-bold shadow-sm'
-                    : 'text-base-content/70 hover:text-base-content hover:bg-base-100/50'
-                }`}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${isCampaignsActive
+                  ? 'bg-base-100 text-primary font-bold shadow-sm'
+                  : 'text-base-content/70 hover:text-base-content hover:bg-base-100/50'
+                  }`}
               >
                 <span>📋</span>
                 <span>Campaigns</span>
@@ -127,11 +125,10 @@ export default function DashboardNavbar() {
 
               <Link
                 href="/dashboard/transactions"
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  isTransactionsActive
-                    ? 'bg-base-100 text-primary font-bold shadow-sm'
-                    : 'text-base-content/70 hover:text-base-content hover:bg-base-100/50'
-                }`}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${isTransactionsActive
+                  ? 'bg-base-100 text-primary font-bold shadow-sm'
+                  : 'text-base-content/70 hover:text-base-content hover:bg-base-100/50'
+                  }`}
               >
                 <span>🧾</span>
                 <span>Transaksi</span>
@@ -140,7 +137,7 @@ export default function DashboardNavbar() {
 
             {/* Right: Credits, Upgrade, ThemeToggle & Profile Dropdown */}
             <div className="flex items-center gap-2.5 sm:gap-3">
-              
+
               {/* Sisa Kuota / Credit Pill */}
               {!loading && profile && (
                 <div className="hidden sm:flex items-center gap-2 bg-base-200/70 border border-base-300 px-3 py-1.5 rounded-xl text-xs">
@@ -200,13 +197,13 @@ export default function DashboardNavbar() {
                   <div className="px-2 py-2 border-b border-base-200">
                     <p className="font-bold text-sm truncate">{profile?.full_name || 'Pengguna Prospekto'}</p>
                     <p className="text-xs text-base-content/60 truncate">{profile?.email || 'user@example.com'}</p>
-                    
+
                     <div className="flex items-center gap-2 mt-2">
                       <span className={`badge badge-sm ${isActivated || isSuperAdmin ? 'badge-success' : 'badge-warning'} font-bold`}>
                         {isSuperAdmin ? 'SUPER ADMIN' : (isActivated ? 'AKTIF PRO' : 'FREE USER')}
                       </span>
                       <span className="text-[11px] text-base-content/70">
-                        {isFreeUser ? `${scrapeRemaining}/5 Harian` : `${totalCredits} Kredit`}
+                        {isFreeUser ? `${scrapeRemaining}/5 Scrapes` : `${totalCredits} Kredit`}
                       </span>
                     </div>
                   </div>
@@ -301,11 +298,10 @@ export default function DashboardNavbar() {
           <div className="grid grid-cols-3 gap-1 bg-base-200/70 p-1 rounded-xl">
             <Link
               href="/dashboard"
-              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                isScraperActive
-                  ? 'bg-base-100 text-primary font-bold shadow-sm'
-                  : 'text-base-content/70 hover:text-base-content'
-              }`}
+              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${isScraperActive
+                ? 'bg-base-100 text-primary font-bold shadow-sm'
+                : 'text-base-content/70 hover:text-base-content'
+                }`}
             >
               <span>🔍</span>
               <span>Scraper</span>
@@ -313,11 +309,10 @@ export default function DashboardNavbar() {
 
             <Link
               href="/dashboard/lists"
-              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                isCampaignsActive
-                  ? 'bg-base-100 text-primary font-bold shadow-sm'
-                  : 'text-base-content/70 hover:text-base-content'
-              }`}
+              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${isCampaignsActive
+                ? 'bg-base-100 text-primary font-bold shadow-sm'
+                : 'text-base-content/70 hover:text-base-content'
+                }`}
             >
               <span>📋</span>
               <span>Lists</span>
@@ -325,11 +320,10 @@ export default function DashboardNavbar() {
 
             <Link
               href="/dashboard/transactions"
-              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                isTransactionsActive
-                  ? 'bg-base-100 text-primary font-bold shadow-sm'
-                  : 'text-base-content/70 hover:text-base-content'
-              }`}
+              className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all ${isTransactionsActive
+                ? 'bg-base-100 text-primary font-bold shadow-sm'
+                : 'text-base-content/70 hover:text-base-content'
+                }`}
             >
               <span>🧾</span>
               <span>Transaksi</span>
