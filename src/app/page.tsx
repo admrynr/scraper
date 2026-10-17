@@ -49,25 +49,24 @@ export default async function Home() {
       <main className="flex-grow">
 
         {/* ── 1. Hero ── */}
-        <section className="relative overflow-hidden pt-16 pb-14 md:pt-24 md:pb-20 px-4 text-center">
+        <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 text-center">
           {/* Interactive Google Maps Scraping Canvas Background */}
           <HeroMapAnimation />
 
           <div className="relative z-10 max-w-5xl mx-auto">
             {/* Google Maps Real-Time Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-100/90 dark:bg-base-200/90 border border-base-300 shadow-xs backdrop-blur-md text-xs font-medium text-base-content/85 mb-8 hover:border-primary/40 transition-colors">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-base-100/90 dark:bg-base-200/90 border border-base-300 shadow-xs backdrop-blur-md text-xs font-medium text-base-content/85 mb-5 md:mb-6 hover:border-primary/40 transition-colors">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-primary font-bold uppercase tracking-wider text-[11px]">Live Extraction</span>
-              <span className="text-base-300 dark:text-base-content/30">•</span>
+
               <span className="flex items-center gap-1.5 text-base-content/80 font-medium">
                 <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EA4335" />
                   <circle cx="12" cy="9" r="2.5" fill="#FFFFFF" />
                 </svg>
-                Terhubung Google Maps
+                Database Resmi Google Maps
               </span>
             </div>
 
@@ -81,12 +80,12 @@ export default async function Home() {
               <span className="text-primary">Tanpa Iklan.</span>
             </h1>
 
-            <p className="text-lg md:text-xl font-medium text-base-content/85 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Kumpulkan <strong className="font-extrabold text-base-content">ribuan kontak prospek</strong> di sekitarmu maupun secara global. Langsung hubungi dengan <strong className="font-extrabold text-primary">sekali klik!</strong>
+            <p className="text-base md:text-lg font-medium text-base-content/85 mb-6 max-w-3xl mx-auto leading-relaxed">
+              Kumpulkan <strong className="font-extrabold text-base-content">ribuan kontak prospek</strong> lokal maupun global. Langsung hubungi dengan <strong className="font-extrabold text-base-content">sekali klik!</strong>
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-6">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-4">
               <Link href={registerHref} className="btn btn-primary btn-lg px-8 rounded-full shadow-lg shadow-primary/25 font-bold">
                 Dapatkan 100 Prospek Gratis
               </Link>
@@ -97,25 +96,28 @@ export default async function Home() {
             <div className="flex items-center justify-center px-4">
               <p className="text-xs sm:text-sm font-medium text-base-content/65 flex items-center gap-2 text-center">
                 <span className="text-primary">⚡</span>
-                <span>Daftar Sekarang, hingga mulai dapatkan 100 Prospek Gratis! - hanya dalam {"<"}5 menit. </span>
+                <span>Daftar Sekarang, mulai dapatkan 100 Prospek Gratis! - hanya dalam {"<"}5 menit. </span>
               </p>
             </div>
+          </div>
+        </section>
 
-            {/* App screenshot mockup */}
-            <div className="mt-14 relative mx-auto w-full max-w-4xl" id="demo">
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/15 via-indigo-500/10 to-transparent blur-3xl -z-10 rounded-full pointer-events-none" />
-              <div className="mockup-browser border border-base-300 bg-base-100 shadow-2xl">
-                <div className="mockup-browser-toolbar">
-                  <div className="input border border-base-300 text-sm">prospekto.id/demo</div>
-                </div>
-                <div className="bg-base-200/60 border-t border-base-300 flex justify-center overflow-hidden">
-                  <iframe
-                    src="/prospekto-video.html"
-                    className="w-full aspect-[9/16] md:aspect-video border-0"
-                    title="Prospekto Demo Video"
-                    allowFullScreen
-                  />
-                </div>
+        {/* ── Demo Video ── */}
+        <section className="relative bg-base-100 scroll-mt-16 mb-16" id="demo">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-indigo-500/5 to-transparent blur-3xl pointer-events-none" />
+          <div className="relative z-10 max-w-2xl mx-auto w-full px-4">
+            <div className="mockup-browser border border-base-300 bg-base-100 shadow-2xl">
+              <div className="mockup-browser-toolbar">
+                <div className="input border border-base-300 text-sm">prospekto.id/demo</div>
+              </div>
+              <div className="bg-base-200/60 border-t border-base-300 flex justify-center overflow-hidden">
+                <iframe
+                  src="/prospekto-video.html"
+                  className="w-full border-0"
+                  style={{ height: 'calc(100vh - 4rem - 2.75rem)' }}
+                  title="Prospekto Demo Video"
+                  allowFullScreen
+                />
               </div>
             </div>
           </div>
@@ -125,7 +127,7 @@ export default async function Home() {
         <section className="py-24 bg-base-200 border-y border-base-300 relative overflow-hidden">
           {/* Subtle warning glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-64 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
-          
+
           <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
             <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wider">
               Waktu Terus Berjalan
@@ -133,7 +135,7 @@ export default async function Home() {
             <h2 className="text-3xl md:text-5xl font-extrabold text-base-content mb-6 max-w-4xl mx-auto leading-tight tracking-tight">
               Setiap hari yang berlalu,<br className="hidden md:block" /> <strong className="text-primary font-extrabold">kompetitor Anda</strong> sudah satu langkah <strong className="font-extrabold">lebih dekat ke klien.</strong>
             </h2>
-            <p className="text-base-content/70 text-lg mb-14 max-w-2xl mx-auto font-medium">Ini bukan sekadar soal siapa yang paling keras bekerja.<br className="hidden md:block"/>Ini tentang <strong className="text-base-content">siapa yang bergerak lebih cepat</strong> dan efisien.</p>
+            <p className="text-base-content/70 text-lg mb-14 max-w-2xl mx-auto font-medium">Ini bukan sekadar soal siapa yang paling keras bekerja.<br className="hidden md:block" />Ini tentang <strong className="text-base-content">siapa yang bergerak lebih cepat</strong> dan efisien.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
@@ -295,7 +297,7 @@ export default async function Home() {
         {/* ── 5. Success Vision ── */}
         <section className="py-24 px-4 relative overflow-hidden bg-base-100">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-full bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
-          
+
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wider">
               Bayangkan Hasilnya
